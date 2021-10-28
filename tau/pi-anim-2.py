@@ -12,7 +12,8 @@ import shutil
 dirpath = "frames"
 if os.path.exists (dirpath) and os.path.isdir (dirpath):
   shutil.rmtree (dirpath)
-  os.mkdir (dirpath)
+
+os.mkdir (dirpath)
 
 """
 pi_cent = (
