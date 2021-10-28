@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# python insidium.py
+# python insidium-pi.py
 
 import cairo
 from math import *
