@@ -4,6 +4,28 @@ import random
 import cairo
 from math import *
 from collections import defaultdict
+import argparse
+import shutil
+import os
+
+def read_args ():
+  parser = argparse.ArgumentParser ()
+  parser.add_argument ("-n", "--number", type=int, default=10)
+  parser.add_argument ("-s", "--sizemin",type=int, default=4)
+  parser.add_argument ("-e", "--sizemax",type=int, default=10)
+  parser.add_argument ("-d", "--dirpath", default="labyrw")
+  parser.add_argument ("--debug", action="store_true")
+  parser.add_argument ("--log", action="store_true")
+  args = parser.parse_args ()
+  return (args)
+
+args = read_args()
+
+dirpath = args.dirpath
+if os.path.exists (dirpath) and os.path.isdir (dirpath):
+  shutil.rmtree (dirpath)
+
+os.mkdir (dirpath)
 
 class Puncto:
   def __init__ (self, x=0, y=0):
@@ -34,26 +56,14 @@ class Board:
   def __init__ (self, cells_x, cells_y ):
     self.cells_x = cells_x
     self.cells_y = cells_y
-    self.inner_borders = []
-    for i in range (1,self.cells_x):
-      for j in range (1,self.cells_y+1):
-        self.inner_borders.append (("WE",(i,j),(i+1,j)))
-    for j in range (1,self.cells_y):
-      for i in range (1,self.cells_x+1):
-        self.inner_borders.append (("NS",(i,j),(i,j+1)))  
+    self.inner_borders = inner_brds (cells_x,cells_y)  
     self.cells = defaultdict (lambda: out) 
-    #self.cells = defaultdict (int) # calls `int ()`, which is 0, which is `out`.
-    self.outer_borders = (
-      [("N",x,1) for x in range (1,self.cells_x+1)] + 
-      [("W",1,y) for y in range (1,self.cells_y+1)] +
-      [("E",self.cells_x,y) for y in range (1,self.cells_y+1)] +
-      [("S",x,self.cells_y) for x in range (1,self.cells_x+1)] 
-    )
+    self.outer_borders = outer_brds (cells_x,cells_y)
     self.start_cell = random.choice (self.outer_borders)
     for i in range (1,cells_x+1):
       for j in range (1,cells_y+1):
         self.cells [i,j] = empty
-    self.fluvio = defaultdict (list) # calls `list ()`, which is `[]`.
+    self.fluvio = defaultdict (lambda: [])
     self.stack = []
   def visit (self,cell,branca):
     self.cells [cell] = visited
@@ -68,9 +78,27 @@ class Board:
     vs = [vicino (d1,x,y) for d1 in "NEWS"]
     return [c1 for c1 in vs if self.cells [c1] == out]
 
+def inner_brds (cells_x,cells_y):
+  inner_borders = []
+  for i in range (1,cells_x):
+    for j in range (1,cells_y+1):
+      inner_borders.append (("WE",(i,j),(i+1,j)))
+  for j in range (1,cells_y):
+    for i in range (1,cells_x+1):
+      inner_borders.append (("NS",(i,j),(i,j+1)))  
+  return inner_borders
+
+def outer_brds (cells_x,cells_y):
+  return (
+    [("N",x,1) for x in range (1,cells_x+1)] + 
+    [("W",1,y) for y in range (1,cells_y+1)] +
+    [("E",cells_x,y) for y in range (1,cells_y+1)] +
+    [("S",x,cells_y) for x in range (1,cells_x+1)] 
+  )
+
 def find_end_cell (board):
   longor = longest_path (board)
-  print ("longor = ",longor)
+  # print ("longor = ",longor)
   wout = sorted (
     [(v,k,board.way_out (k)) for k,v in longor.items()
      if board.way_out (k)],
@@ -91,10 +119,6 @@ def proximo (d,x,y):
   if d == "W": c0 = "E",x-1,y
   if d == "S": c0 = "N",x,y+1
   return c0
-
-w_pic, h_pic = 160,160
-x_margin,y_margin = 20,20
-w_grid,h_grid = w_pic-2*x_margin,h_pic-2*y_margin
 
 tick_w,tick_r = 2,1.5
 
@@ -180,7 +204,10 @@ def create_laby (cells_x,cells_y):
     else:
       break
   board.end_cell,board.longor,board.longest = find_end_cell (board)
-  board.word = read_longitude (board.longest)
+  try:
+    board.word = read_longitude (board.longest)
+  except:
+    return board.longest
   return board
 
 def read_longitude (k):
@@ -197,8 +224,8 @@ def corner_at (d,x,y):
   if d == "NW": c0 = x-1,y-1
   if d == "C":  c0 = x-0.5,y-0.5
   return Puncto (
-    c0[0] * w_grid/cells_x + x_margin, 
-    c0[1] * h_grid/cells_y + y_margin)
+    c0[0] * cw + x_margin, 
+    c0[1] * cw + y_margin)
 
 def arrow_shape1 ():
   return [
@@ -216,18 +243,9 @@ def start_arrow (d,x,y,end=False):
   shape = arrow_shape1 () if not end else arrow_shape2 ()
   theta = 0.25 * tau * "ESWN".index (d)
   return Polygono ([Puncto (
-    (x1+x-0.5) * w_grid/cells_x + x_margin,
-    (y1+y-0.5) * h_grid/cells_y + y_margin
+    (x1+x-0.5) * cw + x_margin,
+    (y1+y-0.5) * cw + y_margin
     ) for x1,y1 in rotated (shape,theta)])
-
-"""
-def end_arrow (d,x,y):
-  theta = 0.25 * tau * "ESWN".index (d)
-  return Polygono ([Puncto (
-    (x1+x-0.5) * w_grid/cells_x + x_margin,
-    (y1+y-0.5) * h_grid/cells_y + y_margin
-    ) for x1,y1 in rotated (arrow_shape2 (),theta)])
-"""
 
 def ln1 (c1,c2,x,y):
   return Linea (corner_at (c1,x,y), corner_at (c2,x,y))
@@ -313,14 +331,16 @@ def draw_laby (board):
   ct.set_source_rgb (0.00, 0.00, 0.00)
   draw_polygono (sa)
   draw_polygono (ea)
-  print ("longest =",board.longest)
+  # print ("longest =",board.longest)
   # paint_longor (board.longor)
   paint_word (board.longor,board.longest,board.word)
 
-def text (ct, string, pos, theta = 0.0, face = 'Sans', font_size = 14):
+def text (ct, string, pos, theta = 0.0, face = 'Sans', font_size = 14, 
+          slant=cairo.FONT_SLANT_NORMAL,weight=cairo.FONT_WEIGHT_NORMAL):
+    # slant = cairo.FONT_SLANT_ITALIC
+    # weight = cairo.FONT_WEIGHT_BOLD
     ct.save ()
-    ct.select_font_face (
-      face, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+    ct.select_font_face (face, slant, weight)
     ct.set_font_size (font_size)
     fascent, fdescent, fheight, fxadvance, fyadvance = (
       ct.font_extents ())
@@ -338,15 +358,20 @@ def paint_longor (longor):
   for xy,ln in longor.items():
     p = corner_at ("C",*xy)
     x,y = p.x,p.y
-    text (ct, str (ln), pos=(x-0.5,y-2.0), face="UnDotum", font_size=8)
+    text (ct, 
+      str (ln), pos=(x-0.5,y-2.0), 
+      face="UnDotum", font_size=8)
+    # draw_point (p)
 
 def paint_word (longor,longest,word):
   for xy,ln in longor.items():
     p = corner_at ("C",*xy)
     x,y = p.x,p.y
     text (ct, 
-      word [(ln-1) % longest].upper(), pos=(x-0.5,y-2.0), 
-      face="UnDotum", font_size=10)
+      word [(ln-1) % longest].upper(), pos=(x-0.75,y-3.0), 
+      face="UnDotum", font_size=13, 
+      weight = cairo.FONT_WEIGHT_BOLD)
+    # draw_point (p)
 
 def longest_path (board):
   longor = {}
@@ -373,24 +398,42 @@ def e_cell (e_btw):
   if y2 > x1:
     return ("S",x1,y1)
 
+wd_longors = dict ([(17, 11622), (16, 11466), (18, 11316), (15, 11012), (19, 10631), (14, 10004), (20, 9556), (10, 9104), (11, 8896), (13, 8700), (12, 8459), (9, 8385), (21, 8353), (22, 7164), (8, 7127), (23, 6101), (7, 5504), (24, 5214), (25, 4422), (26, 3837), (6, 3640), (27, 3388), (28, 2993), (29, 2758), (30, 2577), (5, 2455), (31, 2394), (32, 2131), (33, 1983), (34, 1725), (35, 1584), (36, 1398), (37, 1276), (38, 1086), (39, 939), (4, 897), (40, 803), (41, 707), (42, 636), (43, 522), (44, 498), (45, 428), (46, 381), (47, 312), (48, 298), (49, 255), (50, 242), (51, 207), (3, 204), (52, 177), (53, 141), (55, 135), (54, 135), (57, 101), (56, 91), (59, 76), (60, 72), (58, 62), (63, 51), (61, 46), (62, 43), (65, 40), (64, 31), (66, 29), (1, 27), (2, 27), (68, 23), (69, 22), (73, 18), (72, 17), (71, 14), (67, 14), (70, 11), (80, 7), (77, 7), (76, 7), (81, 6), (74, 6), (83, 5), (75, 4), (85, 4), (84, 4), (79, 3), (86, 3), (143, 2), (132, 2), (91, 2), (78, 2), (115, 2), (93, 1), (119, 1), (102, 1), (101, 1), (125, 1), (214, 1), (100, 1), (89, 1), (117, 1), (90, 1), (124, 1), (118, 1), (87, 1), (146, 1), (111, 1), (114, 1), (133, 1), (129, 1), (106, 1), (99, 1)])
 
-i = 0
+
+longors = defaultdict (lambda: [])
+wds = []
+cw = 30
+x_margin,y_margin = cw,cw
+# w_grid,h_grid = w_pic-2*x_margin,h_pic-2*y_margin
 # name = f"labyrw/labyrw-{str(i).zfill(5)}.png"
-size = 5,5
-cells_x,cells_y = size
-
 # name = "labyrw-2.pdf"
 # if True:
-for i in range (100):
+for i in range (args.number):
+  sz = random.randint (args.sizemin,args.sizemax)
+  size = sz,sz
+  cells_x,cells_y = size
+  w_pic, h_pic = cells_x*cw+2*x_margin,cells_y*cw+2*y_margin
   # name = f"labyrw/labyrw-{str(i).zfill(5)}.pdf"
-  name = f"labyrw/labyrw-{str(i).zfill(5)}.png"
+  zl = len (str (args.number))
+  name = f"{args.dirpath}/labyrw-{str(i).zfill(zl)}.png"
   board = create_laby (*size)
+  if isinstance (board, int):
+    print ("Expression de longitude", board, "non existe.")
+    continue
   ct,surface = create_surface (name)
   draw_laby (board)
-
+  longors [board.longest].append ((f"{cells_x}×{cells_y}"))
+  wds.append ((board.word,str(i).zfill(zl)))
   # print (board.fluvio)
   # print (board.fluvio.keys())
 
   if name.endswith (".png"):
     surface.write_to_png (name)
-
+lng = [(k," ".join(v)) for k,v in longors.items()]
+lng.sort ()
+for k,v in lng:
+  print (f"{k}: {v} ({wd_longors[k]})")
+print ()
+for w,i in wds:
+  print (f"{i}: {w}")
