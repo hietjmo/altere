@@ -1,27 +1,42 @@
 
-# python clavaro-tk.py "phrkfzwuybq" "slntvgaioec" "'xdmjåöä,.-"
+# python clavaro-tk.py "phrkfzwuybq" "slntvgaioec" "xdmjåöä,.-" # das-fi
+# python clavaro-tk.py "qwertyuiop[" "asdfghjkl;'" "zxcvbnm,./" # en-us
+# python clavaro-tk.py "qwertyuiopå" "asdfghjklöä" "zxcvbnm,.-" # fi
+# clavaro.png 951 x 351 pixels
 
+import argparse
 from tkinter import *
 from PIL import Image, ImageTk
 import random
 import time
 import sys
 
+
+def read_args ():
+  parser = argparse.ArgumentParser ()
+  parser.add_argument ('keyorder', nargs='*')
+  parser.add_argument ("--timelimit", "-t", type=int, default=0)
+  parser.add_argument ("--printresults", "-r", action="store_true")
+  parser.add_argument ("--eventinfo", "-e", action="store_true")
+  args = parser.parse_args ()
+  return (args)
+
+args = read_args()
+
 positions1 = [
   "left-8","left-7","left-6","left-5","left-14",
-  "right-14","right-5","right-6","right-7","right-8","right-18",
+  "right-14","right-5","right-6","right-7","right-8","right-17",
   "left-4","left-3","left-2","left-1","left-13",
-  "right-13","right-1","right-2","right-3","right-4","right-17",
-  # "left-15",
-  "left-12","left-11","left-10","left-9",
-  "right-16","right-15","right-9","right-10","right-11","right-12"]
+  "right-13","right-1","right-2","right-3","right-4","right-16",
+  "left-12","left-11","left-10","left-9","left-15",
+  "right-15","right-9","right-10","right-11","right-12"]
 
-qwerty = "qwertyuiop[" "asdfghjkl;'" "zxcvbnm,./"
-# qwerty = "qwertyuiopå" "asdfghjklöä" "zxcvbnm,.-"
+# qwerty = "qwertyuiop[" "asdfghjkl;'" "zxcvbnm,./"
+qwerty = "qwertyuiopå" "asdfghjklöä" "zxcvbnm,.-"
 # qwerty = "phrkfzwuybq" "slntvgaioec" "xdmjåöä,.-"
 
-if len (sys.argv) > 1:
-  qwerty = "".join (sys.argv [1:])
+if args.keyorder:
+  qwerty = "".join (args.keyorder)
 print ("Key order:", qwerty)
 
 qw = dict (zip (positions1,qwerty))
@@ -30,10 +45,13 @@ special = {
   "adiaeresis": "ä",
   "odiaeresis": "ö",
   "aring": "å",
+  "bracketleft": "[",
   "apostrophe": "'",
+  "semicolon": ";",
   "comma": ",",
   "period": ".",
   "minus": "-",
+  "slash": "/",
 }
 
 left,right = "left","right"
@@ -49,7 +67,7 @@ squares = [
   (right,6,510,60), 
   (right,7,570,60), 
   (right,8,630,60), 
-  (right,18,690,60), 
+  (right,17,690,60), 
   # middle row:
   (left,4,105,120), 
   (left,3,165,120), 
@@ -61,14 +79,13 @@ squares = [
   (right,2,525,120), 
   (right,3,585,120), 
   (right,4,645,120), 
-  (right,17,705,120), 
+  (right,16,705,120), 
   # bottom row:
-  # (left,15,75,180), 
   (left,12,135,180), 
   (left,11,195,180), 
   (left,10,255,180), 
   (left,9,315,180), 
-  (right,16,375,180), 
+  (left,15,375,180), 
   (right,15,435,180), 
   (right,9,495,180),
   (right,10,555,180),
@@ -96,6 +113,7 @@ def st (t):
 
 class Window (Frame):
   def __init__(self, root=None):
+    self.args = args
     self.results_left = {}
     self.results_right = {}
     self.read_results ()
@@ -137,6 +155,8 @@ class Window (Frame):
       text="Keep fingers on the base row.")
     self.avgs = [1000,1000,1000,1000,1000]
     self.gen = self.random_square ()
+    if self.args.timelimit > 0:
+      print ("Time limit",  self.args.timelimit, "minutes.")
   def read_results (self):
     rs = [
       (self.results_left,file_left),
@@ -155,13 +175,24 @@ class Window (Frame):
                rside [a] = [b]
       except:
         pass
-    print ("Old results:")
-    print ("Left:",self.results_left)
-    print ("Right:",self.results_right)
+    if args.printresults:
+      print ("Old results:")
+      print ("Left:",self.results_left)
+      print ("Right:",self.results_right)
+  def sort_results (self):
+    for rside in [self.results_left,self.results_right]:
+      rside = {k:sorted (v) [:1000] for k,v in sorted (rside.items ())}
   def on_closing (self,e=None):
-    print ("Results:")
-    print ("Left:",self.results_left)
-    print ("Right:",self.results_right)
+    self.sort_results ()
+    if args.printresults:
+      print ("Results:")
+      print ("Left:",self.results_left)
+      print ("Right:",self.results_right)
+      lres = []
+      for rside in [self.results_left,self.results_right]:
+        lr = sum ([len (v) for k,v in rside.items ()])
+        lres.append (lr)
+      print ("n = ",sum(lres),lres)
     self.save_results ()
     self.root.destroy ()
   def save_results (self):
@@ -170,8 +201,8 @@ class Window (Frame):
       (self.results_right,file_right)]
     for rside,fside in rs:
       f = open (fside,"w")
-      for k,v in sorted (rside.items ()):
-        for x in sorted (v):
+      for k,v in rside.items ():
+        for x in v:
           f.write (f"{k},{x}\n")
       f.close ()
       print ("Wrote",fside) 
@@ -191,12 +222,21 @@ class Window (Frame):
     for r in [rid1,rid2]:
       self.canvas.itemconfig(r, state='normal')
     self.start = time.time ()
+    if self.args.timelimit > 0:
+      now = time.time ()
+      time1 = now - self.globaltime
+      if time1 // 60 >= self.args.timelimit:
+        print (f"Time limit reached ({self.args.timelimit} minutes). Quitting.")
+        self.on_closing ()
   def keydown (self,e):
-    # print ('down', e, e.char, e.keysym, e.keycode)
+    if args.eventinfo:
+      print ('down', e, e.char, e.keysym, e.keycode)
     keyname = e.keysym
     if keyname in special:
       keyname = special [keyname]
     if not self.started:
+      self.globaltime = time.time ()
+
       self.canvas.itemconfig (self.tx1, state='hidden')
       self.canvas.itemconfig (self.tx2, state='hidden')
       print ("Started.")
