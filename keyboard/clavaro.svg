@@ -19,8 +19,8 @@
    sodipodi:docname="clavaro.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    inkscape:export-filename="/home/jhii/python/code/keyboard/clavaro.png"
-   inkscape:export-xdpi="149"
-   inkscape:export-ydpi="149"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
    viewBox="0 0 951.00043 351">
   <defs
      id="defs4">
@@ -241,7 +241,7 @@
      showborder="true"
      inkscape:window-width="1770"
      inkscape:window-height="831"
-     inkscape:window-x="66"
+     inkscape:window-x="60"
      inkscape:window-y="25"
      showguides="true"
      inkscape:guide-bbox="true"
@@ -1556,12 +1556,12 @@
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:26.66666603px;line-height:1.25;font-family:UnDotum;-inkscape-font-specification:'UnDotum, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3771c8;fill-opacity:1;stroke:none"
        x="441.64804"
-       y="204.86667"
+       y="205"
        id="text1321"><tspan
          sodipodi:role="line"
          id="tspan1319"
          x="441.64804"
-         y="204.86667">15</tspan></text>
+         y="205">15</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:26.66666603px;line-height:1.25;font-family:UnDotum;-inkscape-font-specification:'UnDotum, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3771c8;fill-opacity:1;stroke:none"
@@ -1586,12 +1586,12 @@
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:26.66666603px;line-height:1.25;font-family:UnDotum;-inkscape-font-specification:'UnDotum, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3771c8;fill-opacity:1;stroke:none"
        x="683.03998"
-       y="205.13333"
+       y="205"
        id="text1329"><tspan
          sodipodi:role="line"
          id="tspan1327"
          x="683.03998"
-         y="205.13333">12</tspan></text>
+         y="205">12</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:26.66666603px;line-height:1.25;font-family:UnDotum;-inkscape-font-specification:'UnDotum, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3771c8;fill-opacity:1;stroke:none"
@@ -1826,12 +1826,12 @@
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:26.66666603px;line-height:1.25;font-family:UnDotum;-inkscape-font-specification:'UnDotum, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#d40000;fill-opacity:1;stroke:none"
        x="232.54492"
-       y="147.13333"
+       y="147"
        id="text1245"><tspan
          sodipodi:role="line"
          id="tspan1243"
          x="232.54492"
-         y="147.13333">2</tspan></text>
+         y="147">2</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:26.66666603px;line-height:1.25;font-family:UnDotum;-inkscape-font-specification:'UnDotum, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#d40000;fill-opacity:1;stroke:none"
@@ -1866,12 +1866,12 @@
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:26.66666603px;line-height:1.25;font-family:UnDotum;-inkscape-font-specification:'UnDotum, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3771c8;fill-opacity:1;stroke:none"
        x="698.46667"
-       y="86.73333"
+       y="87"
        id="text1257-11"><tspan
          sodipodi:role="line"
          id="tspan1255-3"
          x="698.46667"
-         y="86.73333">17</tspan></text>
+         y="87">17</tspan></text>
     <g
        style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round"
        id="g1321"
@@ -1920,11 +1920,11 @@
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:26.66666603px;line-height:1.25;font-family:UnDotum;-inkscape-font-specification:'UnDotum, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#d40000;fill-opacity:1;stroke:none"
        x="383.10559"
-       y="206.54904"
+       y="205"
        id="text1333-7"><tspan
          sodipodi:role="line"
          id="tspan1331-8"
          x="383.10559"
-         y="206.54904">15</tspan></text>
+         y="205">15</tspan></text>
   </g>
 </svg>
