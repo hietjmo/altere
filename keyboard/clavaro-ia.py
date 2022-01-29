@@ -7,6 +7,7 @@
 import argparse
 from tkinter import *
 from PIL import Image, ImageTk
+from numerales import numeral
 from math import floor
 import random
 import time
@@ -19,6 +20,7 @@ def read_args ():
   parser.add_argument ("--timelimit", "-t", type=int, default=0)
   parser.add_argument ("--printresults", "-r", action="store_true")
   parser.add_argument ("--eventinfo", "-e", action="store_true")
+  parser.add_argument ("--linear", "-l", action="store_true")
   args = parser.parse_args ()
   return (args)
 
@@ -56,7 +58,8 @@ special = {
 }
 
 left,right = "left","right"
-squares = [
+ia = {"left": "Sinistra","right": "Dextra"}
+squares1 = [
   # upper row:
   (left,8,90,60),  
   (left,7,150,60), 
@@ -94,6 +97,14 @@ squares = [
   (right,12,675,180),
 ]
 
+if args.linear:
+  squares = squares1
+else:
+  squares = []
+  for side,num,x,y in squares1:
+    for n in range (max (1,13-num)):
+      squares.append ((side,num,x,y))
+
 baserow = [
   (left,4,105,120), 
   (left,3,165,120), 
@@ -105,14 +116,21 @@ baserow = [
   (right,4,645,120), 
 ]
 
-file_left,file_right = "results-tk-left.txt","results-tk-right.txt"
+file_left,file_right = "results-ia-left.txt","results-ia-right.txt"
 w,h = 60,60
+
+def scolor (side):
+  if side == right:
+    color = "#3771c8"
+  else:
+    color = "#d40000"
+  return color
 
 def res_str (rs):
   if len (rs) == 0:
-    t = 0,0
+    t = 0,0,0,0
   else:
-    t = [sum (rs[-n:]) / len (rs[-n:]) for n in (1,20)]
+    t = [sum (rs[-n:]) / len (rs[-n:]) for n in (1,5,12,1000)]
   return " ".join ([str (len (rs))] + [f"{t1:.3f}"for t1 in t])
 
 def st (t):
@@ -152,10 +170,14 @@ class Window (Frame):
         color = "#0000d4"
       else:
         color = "#d40000"
-      rid1,rid2 = self.create_rectangle (x,y,x+w,y+h,width=3,fill=color,alpha=0.50)
+      rid1,rid2 = self.create_rectangle (
+        x,y,x+w,y+h,width=3,fill=color,alpha=0.50)
       for r in [rid1,rid2]:
         self.canvas.itemconfig (r, state='hidden')
       self.rects.append ((rid1,rid2,side,num))
+      self.space = self.create_rectangle (265,266,626,325,width=3)
+      self.canvas.itemconfig (self.space, state='hidden')
+
     self.started = False
     self.rs = []
     self.time = self.canvas.create_text (880,12,font=("sans",12,"bold"),
@@ -213,6 +235,7 @@ class Window (Frame):
         lr = sum ([len (v) for k,v in rside.items ()])
         lres.append (lr)
       print ("n = ",sum(lres),lres)
+    print ("Results:", res_str (self.rs))
     self.save_results ()
     self.root.destroy ()
   def save_results (self):
@@ -243,11 +266,18 @@ class Window (Frame):
       str(floor(time1 % 60)).zfill (2))
     self.canvas.itemconfig (self.time, text=newtext)
     self.root.after (100, self.timeout100)
+
   def timeout (self):
+    if self.newkey:
+      rid1,rid2,side,num = self.newkey
+      for r in [rid1,rid2]:
+        self.canvas.itemconfig (r, state='hidden')
     self.newkey = next (self.gen)
     rid1,rid2,side,num = self.newkey
-    for r in [rid1,rid2]:
-      self.canvas.itemconfig(r, state='normal')
+    self.canvas.itemconfig (self.spacetx,
+      text = ia [side] + " " + numeral(num),fill = scolor(side))
+    self.canvas.itemconfig (self.space, state='normal')
+
     self.start = time.time ()
     if self.args.timelimit > 0:
       now = time.time ()
@@ -263,7 +293,6 @@ class Window (Frame):
       keyname = special [keyname]
     if not self.started:
       self.globaltime = time.time ()
-
       self.canvas.itemconfig (self.tx1, state='hidden')
       self.canvas.itemconfig (self.tx2, state='hidden')
       print ("Started.")
@@ -278,6 +307,8 @@ class Window (Frame):
     kb = st (newkey)
     if keyname == qw [kb]:
       self.end = time.time ()
+      for r in [rid1,rid2]:
+        self.canvas.itemconfig (r, state='normal')
       print ("Correct:", keyname)
       total = self.end - self.start
       total = round (float (total), 4)
@@ -293,9 +324,10 @@ class Window (Frame):
           self.results_right [num].append (total)
         else:
           self.results_right [num] = [total]
-      for r in [rid1,rid2]:
-        self.canvas.itemconfig (r, state='hidden')
-      self.newkey = None
+
+      self.canvas.itemconfig (self.spacetx, text="")
+      self.canvas.itemconfig (self.space, state='hidden')
+      # self.newkey = None
       avg = round (0.6 * sum (self.avgs) / len (self.avgs))
       avg = min (avg,2000)
       self.root.after (avg, self.timeout)
@@ -317,6 +349,6 @@ class Window (Frame):
 
 root = Tk ()
 win = Window (root)
-root.title ('Clavaro-tk')
+root.title ('Clavaro-ia')
 win.mainloop()
 
