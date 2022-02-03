@@ -11,7 +11,6 @@ def milliardos (n):
     result = from1to999 (m) + 'miljardia'
   return result
 
-
 def milliones (n):
   m = n % 1_000_000_000 // 1_000_000
   result = ''
@@ -89,5 +88,3 @@ def numeraali (n):
   w3 = join_numwds (mmm,w2)
 
   return w3
-
-
