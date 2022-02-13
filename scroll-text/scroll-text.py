@@ -49,7 +49,7 @@ for i,x in enumerate (lnes):
 linew = args.fontsize
 step = args.step
 longor = len (lines)
-max_y = linew * longor
+max_y = linew * longor + 2*step
 lnspc = len (str (longor))
 screenln = h_pic // linew
 
