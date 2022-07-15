@@ -1,5 +1,6 @@
 
 """
+python claviero-1.py -order "/vldcxkmuypj/trsngfeaoiw/qhbzåöä,.-/"
 Use EAIONSTRLUCDPMVBGHFQXJYKZW from
 ~/interlingua/frequentia/litteras-in-ordine.txt
 """
@@ -15,10 +16,12 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk,Gdk,GLib
 from gi.repository.GdkPixbuf import Pixbuf
 from itertools import accumulate
+from collections import defaultdict
+from os.path import exists
 from math import floor
 
 imgfile = "imagine-claviero.png"
-left,right = "left","right"
+left,right,number,kgreen = "left","right","number","kgreen"
 width = -1
 height = 351
 preserve_aspect_ratio = True
@@ -36,6 +39,7 @@ def read_args ():
   pad = parser.add_argument
   pad ('files', nargs='*')
   pad ("-i", "--infile", default="crusoe-de-novo-ia.txt")
+  pad ("-order", "--ordine", default="")
   pad ("-p", "--parolas", default="")
   pad ("-ln", "--line", type=int, default=-1)
   pad ("-wx", "--width", type=int, default=951)
@@ -44,12 +48,15 @@ def read_args ():
   pad ("-sz1", "--fontsize1", type=int, default=24)
   pad ("-sz2", "--fontsize2", type=int, default=20)
   pad ("--outlier", type=float, default=5.0)
+  # pad ("-font1", "--fontname1", default="sans-serif")
   pad ("-font1", "--fontname1", default="UnDotum")
   pad ("-font2", "--fontname2", default="monospace")
   pad ("--hardwarecodes", action="store_true")
-  pad ("--oldpic", action="store_true")
+  pad ("--createpic", action="store_true")
   pad ("--dontsave", action="store_true")
-  pad ("--log", action="store_true")
+  pad ("--log1", action="store_true")
+  pad ("--log2", action="store_true")
+  pad ("--log3", action="store_true")
   args = parser.parse_args ()
   return (args)
 
@@ -64,6 +71,8 @@ black = (0,0,0)
 grays = [(x/10,x/10,x/10)for x in range(0,11)]
 # print ("grays:")
 # print (grays)
+gray = grays[4]
+gray_h = gray + (0.60,)
 white = (1,1,1)
 orange2 = orange + (0.60,)
 blue = 0.22, 0.44, 0.78
@@ -79,12 +88,24 @@ purple_h = purple + (0.60,)
 # red = "#d40000"
 
 hardware_codes = [
+  10,11,12,13,14,  15,16,17,18,19,
   24,25,26,27,28,  29,30,31,32,33,34,
   38,39,40,41,42,  43,44,45,46,47,48,
   52,53,54,55,56,  57,58,59,60,61, ]
 
 squares = [
-  # upper row:
+  # number row: 85-25,85-25
+  (10, number, 60, 0),
+  (11, number, 120, 0),
+  (12, number, 180, 0),
+  (13, number, 240, 0),
+  (14, number, 300, 0),
+  (15, number, 360, 0),
+  (16, number, 420, 0),
+  (17, number, 480, 0),
+  (18, number, 540, 0),
+  (19, number, 600, 0),
+  # upper row: 115-25,85-25
   (24, left, 90, 60),
   (25, left, 150, 60),
   (26, left, 210, 60),
@@ -138,44 +159,45 @@ w,h = 60,60
 
 # EAION STRLU CDPMV BGHFQ XJYKZ W
 claves = [
-  (24, 'V'),
-  (25, 'L'),
-  (26, 'D'),
-  (27, 'C'),
-  (28, 'X'),
-  (29, 'K'),
-  (30, 'M'),
-  (31, 'U'),
-  (32, 'Y'),
-  (33, 'P'),
-  (34, 'J'),
-  (38, 'T'),
-  (39, 'R'),
-  (40, 'S'),
-  (41, 'N'),
-  (42, 'G'),
-  (43, 'F'),
-  (44, 'E'),
-  (45, 'A'),
-  (46, 'O'),
-  (47, 'I'),
-  (48, 'W'),
-  (52, 'Q'),
-  (53, 'H'),
-  (54, 'B'),
-  (55, 'Z'),
-  (56, 'Å'),
-  (57, 'Ö'),
-  (58, 'Ä'),
-  (59, ','),
-  (60, '.'),
-  (61, '-'),
+  # number row:
+  (10, '1'), (11, '2'), (12, '3'), (13, '4'), (14, '5'), 
+  (15, '6'), (16, '7'), (17, '8'), (18, '9'), (19, '0'), 
+  # upper row:
+  (24, 'V'), (25, 'L'), (26, 'D'), (27, 'C'), (28, 'X'), 
+  (29, 'K'), (30, 'M'), (31, 'U'), (32, 'Y'), (33, 'P'), (34, 'J'),
+  # middle row:
+  (38, 'T'), (39, 'R'), (40, 'S'), (41, 'N'), (42, 'G'), 
+  (43, 'F'), (44, 'E'), (45, 'A'), (46, 'O'), (47, 'I'), (48, 'W'),
+  # bottom row:
+  (52, 'Q'), (53, 'H'), (54, 'B'), (55, 'Z'), (56, 'Å'), 
+  (57, 'Ö'), (58, 'Ä'), (59, ','), (60, '.'), (61, '-'),
 ]
+# order = "/vldcxkmuypj/trsngfeaoiw/qhbzåöä,.-/"
+order = "/qwertyuiopå/asdfghjklöä/zxcvbnm,.-/"
+if args.ordine:
+  order = args.ordine
+ao = order.split(order[0])
+claves = (
+  # number row:
+  [(10+i,x) for i,x in enumerate ("1234567890")] +
+  # upper row:
+  [(24+i,x.upper()) for i,x in enumerate (ao[1])] +
+  # middle row:
+  [(38+i,x.upper()) for i,x in enumerate (ao[2])] +
+  # bottom row:
+  [(52+i,x.upper()) for i,x in enumerate (ao[3])])
 
 special = {
   ',': ';',
   '.': ':',
-  '-': '−'
+  '-': '−',
+  '1': '!',
+  '2': '"',
+  '3': '#',
+  '5': '%',
+  '7': '/',
+  '8': '(',
+  '9': ')',
 }
 
 sqs = {}
@@ -183,7 +205,7 @@ labels = {}
 
 poss = {num: (side,x,y) for num,side,x,y in squares}
 keyst = {num:ch for num,ch in claves}
-shift = [(right,0,180,75,60),(right,736,180,165,60)]
+shift = [(kgreen,0,180,75,60),(kgreen,736,180,165,60)]
 for num,ch in claves:
   side,x1,y1 = poss [num]
   sqs[ch.lower()] = [(side,x1,y1,60,60)]
@@ -191,8 +213,8 @@ for num,ch in claves:
   if ch.isalpha(): 
     sqs[ch.upper()] = [(side,x1,y1,60,60)] + [shift[0 if side == right else 1]]
 
-sqs[' '] = [(right,240,240,360,60)]
-sqs['BackSpace'] = [(left,781,0,120,60)]
+sqs[' '] = [(kgreen,240,240,360,60)]
+sqs['BackSpace'] = [(kgreen,781,0,120,60)]
 
 def init_vars (self):
   self.resline = ""
@@ -205,10 +227,13 @@ def init_vars (self):
   self.starttime = None
   self.startkey = -1
   self.lastkept = 0
-  self.presses = {}
+  self.latter = {}
   self.timeold = None
   self.rank = None
   self.curline = {}
+  self.errors = defaultdict (lambda: 0)
+  self.lasterror = 0,0
+  self.outliers = []
 
 def load_json_files (self):
   try:
@@ -217,19 +242,24 @@ def load_json_files (self):
   except:
     self.scores = []
   try:
-    self.results = json.load (open ("presses.json","r"))
+    self.presses = json.load (open ("presses.json","r"))
   except:
-    self.results = {}
+    self.presses = {}
   try:
     self.config = json.load (open ("config.json","r"))
   except:
-    self.config = {'self.line': 0, 'self.usage':0}
-  self.line = self.config ['self.line']
-  if (not args.parolas) and 'self.curline' in self.config:
-    self.curline = self.config ['self.curline']
+    self.config = {'line': 0, 'usage':0, 'alltimekeys':0}
+  self.line = self.config ['line']
+  if (not args.parolas) and 'curline' in self.config:
+    self.curline = self.config ['curline']
     if args.infile in self.curline:
       self.line = self.curline [args.infile]
-  self.usage = self.config ['self.usage']
+  if 'order' in self.config:
+    self.order = self.config ['order']
+  else:
+    self.order = ""
+  self.usage = self.config ['usage']
+  self.alltimekeys = self.config ['alltimekeys']
 
 def wrap_text (teksto):
   wrapper = textwrap.TextWrapper (width=args.wrapwidth)
@@ -239,13 +269,12 @@ def wrap_text (teksto):
 
 def load_teksto ():
   f = open (args.infile)
-  teksto = f.read ()
+  teksto = f.read().strip()
   f.close ()
-  
   rpl = ("\n"," "),("  "," "),("  "," "),
   for a,b in rpl:
     teksto = teksto.replace (a,b)
-  
+  # print (teksto)
   # wrapper = textwrap.TextWrapper (width=args.wrapwidth)
   # teksto = wrapper.wrap (text=teksto)
   # teksto = [s + " " for s in teksto]
@@ -253,6 +282,12 @@ def load_teksto ():
   return teksto
 
 def init_ui (self):
+  init_vars (self)
+  load_json_files (self)
+  if args.createpic or args.ordine or not exists (imgfile):
+    print ("Create new key order.")
+    self.order = args.ordine
+    draw_key_image ()
   self.pixbuf = Pixbuf.new_from_file_at_scale (
      imgfile, width, height, preserve_aspect_ratio)
   self.w,self.h = self.pixbuf.get_width (), self.pixbuf.get_height ()
@@ -270,8 +305,7 @@ def init_ui (self):
     self.text = load_teksto ()
   self.text = wrap_text (self.text)
   self.wrappoints = list (accumulate([0]+[len (s) for s in self.text]))
-  init_vars (self)
-  load_json_files (self)
+
   if self.line >= len (self.text):
     self.line = 0
   if args.line != -1:
@@ -280,7 +314,15 @@ def init_ui (self):
   window = self.get_toplevel().get_window()
   window.set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
 
-def draw_keys ():
+def label_color (side):
+  d = {right:blue, left:red, number:gray, kgreen: green}
+  return d [side]
+
+def hilit_color (side):
+  d = {right:blue_h, left:red_h, number:gray_h, kgreen: green_h}
+  return d [side]
+
+def draw_key_image ():
   imgvacue = "claviero-vacue.png"
   surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, w_pic, h_pic)
   ct = cairo.Context (surface)
@@ -302,12 +344,15 @@ def draw_keys ():
   for ch in labels:
     side,num,x1,y1,h1,w1 = labels[ch]
     x,y = x1 + 25+7, y1 + 25+2
-    ct.set_source_rgba (*(blue if side == right else red))
+    ct.set_source_rgba (*(label_color(side)))
     ct.move_to (x,y+th)
     if args.hardwarecodes:
       ct.show_text (str(num))
     else:
+      if side == number:
+        ct.move_to (x,y+60-10)
       ct.show_text (ch)
+  print ("Writing", imgfile)
   surface.write_to_png (imgfile)
 
 def keep_small (d,periodnow):
@@ -379,27 +424,54 @@ def draw_res (ct,resline):
   ct.move_to (926-width,fsize + 2)
   ct.show_text (resline)
 
+def save_resultlog (self,wtot):
+  print ("save_resultlog")
+  r = defaultdict (lambda: [])
+  for k,v in self.presses.items():
+    if len(k) == 2:
+      a,b = k[0],k[1]
+      if a != b and 'a' <= b <= 'z':
+        r[b].append (v)
+  q = []
+  for k,v in r.items():
+    c,d = v[0]
+    for a,b in v:
+      c,d = (c * d + a * b) / (d + b), d + b
+    q.append ((k,c))
+  
+  q.sort (key=lambda x: x[1])
+  f = open ("resultlog.txt","a")
+  f.write (f"# {wtot}\n")
+  for a,b in q:
+    f.write (f"{a} {b:.4f}\n")
+  f.close()
+
 def calc_speed (self,chars):
   if not (self.starttime):
     self.starttime = time.time()
     self.startkey = chars - 1
     GLib.timeout_add (195, self.on_timeout)
     print ("Started.")
-  if chars not in self.presses:
-    self.presses [chars] = time.time() - self.starttime
+  if chars not in self.latter:
+    self.latter [chars] = time.time() - self.starttime
     # print (chars)
   self.total = chars - self.startkey 
-  # print (self.presses)
+  wtot = self.alltimekeys + self.total
+  # if args.log3:
+  #  print (wtot)
+  if wtot % 10000 == 0:
+    save_resultlog (self,wtot)
+  # print (self.latter)
 
 def period_results (self):
   pd = [0,1,2,3,4]
   ts = [0.5,1.0,1.5,2.0]
   now = time.time()
-  seconds = now - self.starttime
+  seconds = floor (now - self.starttime)
   periodnow = seconds // 30
-  remainder = floor (seconds % 30)
+  remainder = seconds % 30
   p = {}
-  for k,v in self.presses.items():
+  for k,v in self.latter.items():
     period = periodnow - v // 30
     for pe in pd:
       if pe not in p:
@@ -416,19 +488,20 @@ def period_results (self):
   cpm = [a/b for a,b in zip (acc,ts)]
   if remainder == 0 and self.lastkept != periodnow:
     self.rank = None
-    self.presses = keep_small (self.presses,periodnow)
-    # print ("presses in memory:",len(self.presses))
-    print ("acclist:",acclist)
+    self.latter = keep_small (self.latter,periodnow)
+    if args.log3:
+      print ("latter in memory:",len(self.latter))
+      print ("acclist:",acclist)
     if acclist.count(0) == 0:
       self.rank = save_score (self,cpm[3])
-      print ("Score saved:",cpm[3])
+      print (f"Score saved: {cpm[3]} ({self.rank})")
     else:
       print ("Acclist contains zeros, score not saved.")
     self.lastkept = periodnow
   return cpm,p,seconds
 
-def save_score (self,cpm3):
-  # t1 = time.time()
+def save_score2 (self,cpm3):
+  t1 = time.time()
   inx = 0
   for x,t in self.scores:
     if cpm3 > x:
@@ -436,13 +509,31 @@ def save_score (self,cpm3):
     else:
       inx += 1
   self.scores.insert (inx,[cpm3,time.strftime("%Y-%m-%d %H:%M:%S")])
-  # t2 = time.time()
-  # self.scores.sort (key=lambda y: (revers(y[0]), y[1]))
-  # t3 = time.time()
-  # print (f"time1: {t2-t1:.12f}")
-  # print (f"time2: {t3-t2:.12f}")
+  t2 = time.time()
+  self.scores.sort (key=lambda y: (revers(y[0]), y[1]))
+  t3 = time.time()
+  print (f"time1: {t2-t1:.12f}")
+  print (f"time2: {t3-t2:.12f}")
   self.scores = self.scores [:15000]
   return inx + 1
+
+def save_score1 (self,cpm3):
+  inx = 0
+  for x,t in self.scores:
+    if cpm3 > x:
+      break
+    else:
+      inx += 1
+  self.scores.insert (inx,[cpm3,time.strftime("%Y-%m-%d %H:%M:%S")])
+  self.scores = self.scores [:15000]
+  return inx + 1
+
+def save_score (self,cpm3):
+  if args.log1:
+    result = save_score2 (self,cpm3)
+  else:
+    result = save_score1 (self,cpm3)
+  return result
 
 def take_timeout (self):
   # print ("Timeout.")
@@ -459,7 +550,7 @@ def take_timeout (self):
 def draw_window (self, widget, cr):
   Gdk.cairo_set_source_pixbuf (cr, self.pixbuf, 0, 0)
   cr.paint ()
-  gotright, rest,lft = calc_cire (self.current,self.text[self.line])
+  gotright, rest,lft = calc_cire (self.current,self.text[self.line % len (self.text)])
   this_and_some = [self.text [x % len(self.text)] 
     for x in range (self.line,self.line+5)]
   self.nxt,self.restlen = draw_txt (
@@ -473,7 +564,7 @@ def draw_window (self, widget, cr):
         cr.set_source_rgba (*yellow_h)
         cr.rectangle (0, 0, w_pic, h_pic)
         cr.fill ()
-      cr.set_source_rgba (*(blue_h if side == right else red_h))
+      cr.set_source_rgba (*(hilit_color(side)))
       if gotright and lft and gotright[-1] == lft[0]:
         cr.set_line_width(6)
         cr.rectangle (x+25+3, y+25+3, w-6, h-6)
@@ -484,30 +575,54 @@ def draw_window (self, widget, cr):
         cr.fill ()
     self.last = self.nxt
 
+def divmod_wrappoint (wrappoints, line):
+  maxwp = wrappoints [-1]
+  q,r = divmod (line, maxwp)
+  return q * maxwp + wrappoints [r] 
+
 def add_key (self):
-  gotright, rest, lft = calc_cire (self.current,self.text[self.line])
+  gotright, rest, lft = calc_cire (self.current,self.text[self.line % len (self.text)])
   if rest == "" and self.current != self.old:
-    calc_speed (self,self.wrappoints[self.line] + len(gotright))
+    calc_speed (self,divmod_wrappoint (self.wrappoints,self.line) + len(gotright))
     now = time.time ()
     if self.restlen == 0 and self.timeold:
       ad = (" " + self.current) [-2:]
       t1 = now - self.timeold
       if len (ad) == 2:
-        if ad in self.results:
-          a,b = self.results [ad] 
+        if ad in self.presses:
+          a,be = self.presses [ad] 
           if t1 / a < args.outlier:
-            if b < 100:
-              b += 1
-            self.results [ad] = [(1/b) * t1 + (1 - 1/b) * a, b]
+            be += 1
+            b = min (300,be)
+            self.presses [ad] = [(1/b) * t1 + (1 - 1/b) * a, be]
           else:
-            # print ("Outlier rejected:", t1, "s", t1/a, "x")
-            pass
+            out = (ad,t1,t1/a)
+            self.outliers.append (out)
+            if args.log2:
+              print (f"Outlier rejected: '{out[0]}' {out[1]:.4f} s {out[2]:.2f}x")
         else:
-          self.results [ad] = [t1,1]
-        a,b = self.results [ad]
-        # print (f"'{ad}': {a:.4f} s {b}")
+          self.presses [ad] = [t1,1]
+        if args.log2:
+          a,be = self.presses [ad]
+          print (f"'{ad}': {a:.4f} s {be}")
     self.timeold = now
     self.old = self.current
+  else:
+    if len(rest) == 1 and self.starttime:
+      newerror = self.line, len(gotright)
+      if newerror != self.lasterror:
+        now = time.time()
+        seconds = floor (now - self.starttime)
+        periodnow = seconds // 30
+        # print ("error:", periodnow,newerror)
+        self.errors[periodnow] += 1
+        self.lasterror = newerror
+        # print (dict(self.errors))
+
+def letter_shift (letter,shift):
+  if letter.isalpha():
+    return letter.upper() if shift else letter.lower() 
+  return letter
 
 def handle_key_press (self, widget, event):
   hw2 = event.hardware_keycode
@@ -532,32 +647,37 @@ def handle_key_press (self, widget, event):
     letter = keyst [hw2]
     accept = letter != ''
     # print (f"letter ='{letter}'")
-    letter = letter.upper() if shift else letter.lower()
     if letter in special and shift:
       letter = special [letter]
+    letter = letter_shift (letter,shift)
     self.current += letter
   # print ("accept =",accept)
   if (not accept) and 0 <= number <= 512:
     self.current += chr (number)
   add_key (self)
-  if self.restlen == 0 and len (self.current) >= len (self.text[self.line]):
-    self.line = (self.line + 1) % len (self.text)
+  if self.restlen == 0 and len (self.current) >= len (self.text[self.line % len (self.text)]):
+    self.line += 1
     self.current = ""
   widget.queue_draw ()
 
 def do_quit (self,widget,event):
+  self.alltimekeys += self.total
   if self.starttime:
     self.usage += round (time.time() - self.starttime)
   if not args.parolas:
-    self.curline [args.infile] = self.line 
-  self.config = {'self.line': self.line, 'self.usage': self.usage,
-    'self.curline': self.curline}
+    self.curline [args.infile] = self.line % len (self.text)
+  self.config = {'line': self.line % len (self.text), 'usage': self.usage,
+    'curline': self.curline, 'alltimekeys': self.alltimekeys, 
+    'order': self.order }
   if not args.dontsave:
     json.dump (self.config, open("config.json","w"))
-    json.dump (self.results, open("presses.json","w"))
+    json.dump (self.presses, open("presses.json","w"))
     json.dump (self.scores, open("scores.json","w"))
   else:
     print ("Argument '--dontsave': Nothing has been saved.")
+  print ("Outliers:")
+  for out in self.outliers:
+    print (f"'{out[0]}' {out[1]:.4f} s {out[2]:.2f}x")
   print ("Number of scores =",len(self.scores))
   print ("Best scores:")
   for x,t in self.scores[:30]:
@@ -567,10 +687,10 @@ def do_quit (self,widget,event):
   m, s = divmod (self.usage, 60)
   h, m = divmod (m, 60)
   print ("Total usage:", h, "hours", m, "minutes.")
+  print ("Total keys:", self.alltimekeys)
   Gtk.main_quit()
 
-if not args.oldpic:
-  draw_keys ()
+
 
 class Win (Gtk.Window):
   def __init__ (self):
