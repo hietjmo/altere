@@ -1,6 +1,6 @@
 
 """
-python claviero-1.py -order "/vldcxkmuypj/trsngfeaoiw/qhbzåöä,.-/"
+python claviero-1.py -order "/vldcxkmuypj/trsngfeaoiw/qhbzåöä,.-/" --createpic
 Use EAIONSTRLUCDPMVBGHFQXJYKZW from
 ~/interlingua/frequentia/litteras-in-ordine.txt
 """
@@ -23,7 +23,7 @@ from math import floor
 imgfile = "imagine-claviero.png"
 left,right,number,kgreen = "left","right","number","kgreen"
 width = -1
-height = 351
+height = 352
 preserve_aspect_ratio = True
 
 class revers:
@@ -42,21 +42,21 @@ def read_args ():
   pad ("-order", "--ordine", default="")
   pad ("-p", "--parolas", default="")
   pad ("-ln", "--line", type=int, default=-1)
-  pad ("-wx", "--width", type=int, default=951)
-  pad ("-hy", "--height", type=int, default=351)
+  pad ("-wx", "--width", type=int, default=952)
+  pad ("-hy", "--height", type=int, default=352)
   pad ("-ww", "--wrapwidth", type=int, default=75)
-  pad ("-sz1", "--fontsize1", type=int, default=24)
+  pad ("-sz1", "--fontsize1", type=int, default=20)
+  # pad ("-sz1", "--fontsize1", type=int, default=24)
   pad ("-sz2", "--fontsize2", type=int, default=20)
   pad ("--outlier", type=float, default=5.0)
-  # pad ("-font1", "--fontname1", default="sans-serif")
-  pad ("-font1", "--fontname1", default="UnDotum")
+  pad ("-font1", "--fontname1", default="sans-serif")
+  # pad ("-font1", "--fontname1", default="UnDotum")
   pad ("-font2", "--fontname2", default="monospace")
   pad ("--hardwarecodes", action="store_true")
   pad ("--createpic", action="store_true")
   pad ("--dontsave", action="store_true")
-  pad ("--log1", action="store_true")
-  pad ("--log2", action="store_true")
-  pad ("--log3", action="store_true")
+  for i in range (0,10):
+    pad (f"--log{i}", action="store_true")
   args = parser.parse_args ()
   return (args)
 
@@ -91,7 +91,8 @@ hardware_codes = [
   10,11,12,13,14,  15,16,17,18,19,
   24,25,26,27,28,  29,30,31,32,33,34,
   38,39,40,41,42,  43,44,45,46,47,48,
-  52,53,54,55,56,  57,58,59,60,61, ]
+  52,53,54,55,56,  57,58,59,60,61, 
+]
 
 squares = [
   # number row: 85-25,85-25
@@ -158,6 +159,7 @@ baserow = [
 w,h = 60,60
 
 # EAION STRLU CDPMV BGHFQ XJYKZ W
+"""
 claves = [
   # number row:
   (10, '1'), (11, '2'), (12, '3'), (13, '4'), (14, '5'), 
@@ -172,64 +174,63 @@ claves = [
   (52, 'Q'), (53, 'H'), (54, 'B'), (55, 'Z'), (56, 'Å'), 
   (57, 'Ö'), (58, 'Ä'), (59, ','), (60, '.'), (61, '-'),
 ]
-# order = "/vldcxkmuypj/trsngfeaoiw/qhbzåöä,.-/"
-order = "/qwertyuiopå/asdfghjklöä/zxcvbnm,.-/"
-if args.ordine:
-  order = args.ordine
-ao = order.split(order[0])
-claves = (
-  # number row:
-  [(10+i,x) for i,x in enumerate ("1234567890")] +
-  # upper row:
-  [(24+i,x.upper()) for i,x in enumerate (ao[1])] +
-  # middle row:
-  [(38+i,x.upper()) for i,x in enumerate (ao[2])] +
-  # bottom row:
-  [(52+i,x.upper()) for i,x in enumerate (ao[3])])
+"""
 
-special = {
-  ',': ';',
-  '.': ':',
-  '-': '−',
-  '1': '!',
-  '2': '"',
-  '3': '#',
-  '5': '%',
-  '7': '/',
-  '8': '(',
-  '9': ')',
-}
 
-sqs = {}
-labels = {}
-
-poss = {num: (side,x,y) for num,side,x,y in squares}
-keyst = {num:ch for num,ch in claves}
-shift = [(kgreen,0,180,75,60),(kgreen,736,180,165,60)]
-for num,ch in claves:
-  side,x1,y1 = poss [num]
-  sqs[ch.lower()] = [(side,x1,y1,60,60)]
-  labels[ch.upper()] = (side,num,x1,y1,60,60)
-  if ch.isalpha(): 
-    sqs[ch.upper()] = [(side,x1,y1,60,60)] + [shift[0 if side == right else 1]]
-
-sqs[' '] = [(kgreen,240,240,360,60)]
-sqs['BackSpace'] = [(kgreen,781,0,120,60)]
+def create_order (self):
+  global sqs, shift, keyst, special, labels
+  # order = "/vldcxkmuypj/trsngfeaoiw/qhbzåöä,.-/"
+  order = "/qwertyuiopå/asdfghjklöä/zxcvbnm,.-/"
+  if self.order:
+    order = self.order
+  if args.ordine:
+    order = args.ordine
+  ao = order.split(order[0])
+  claves = (
+    # number row:
+    [(10+i,x) for i,x in enumerate ("1234567890")] +
+    # upper row:
+    [(24+i,x.upper()) for i,x in enumerate (ao[1])] +
+    # middle row:
+    [(38+i,x.upper()) for i,x in enumerate (ao[2])] +
+    # bottom row:
+    [(52+i,x.upper()) for i,x in enumerate (ao[3])]
+  )
+  
+  special = {
+    ',': ';', '.': ':', '-': '−', '1': '!', '2': '"', 
+    '3': '#', '5': '%', '7': '/', '8': '(', '9': ')',
+  }
+  
+  sqs = {}
+  labels = {}
+  
+  poss = {num: (side,x,y) for num,side,x,y in squares}
+  keyst = {num:ch for num,ch in claves}
+  shift = [(kgreen,0,180,75,60),(kgreen,736,180,165,60)]
+  for num,ch in claves:
+    side,x1,y1 = poss [num]
+    sqs[ch.lower()] = [(side,x1,y1,60,60)]
+    labels[ch.upper()] = (side,num,x1,y1,60,60)
+    if ch.isalpha(): 
+      sqs[ch.upper()] = [(side,x1,y1,60,60)] + [shift[0 if side == right else 1]]
+  
+  sqs[' '] = [(kgreen,240,240,360,60)]
+  sqs['BackSpace'] = [(kgreen,781,0,120,60)]
+  if args.createpic or args.ordine or order != self.order or not exists (imgfile):
+    print ("Create new key order.")
+    self.order = args.ordine
+    draw_key_image ()
 
 def init_vars (self):
-  self.resline = ""
-  self.current = ""
-  self.old = ""
-  self.nxt = ''
-  self.last = ''
-  self.restlen = 0
-  self.total = 0
-  self.starttime = None
+  self.resline, self.oldresline = "",""
+  self.current, self.old = "",""
+  self.nxt, self.last = '',''
+  self.restlen, self.total = 0,0
   self.startkey = -1
   self.lastkept = 0
   self.latter = {}
-  self.timeold = None
-  self.rank = None
+  self.starttime, self.timeold, self.rank = None,None,None
   self.curline = {}
   self.errors = defaultdict (lambda: 0)
   self.lasterror = 0,0
@@ -284,10 +285,8 @@ def load_teksto ():
 def init_ui (self):
   init_vars (self)
   load_json_files (self)
-  if args.createpic or args.ordine or not exists (imgfile):
-    print ("Create new key order.")
-    self.order = args.ordine
-    draw_key_image ()
+  create_order (self)
+
   self.pixbuf = Pixbuf.new_from_file_at_scale (
      imgfile, width, height, preserve_aspect_ratio)
   self.w,self.h = self.pixbuf.get_width (), self.pixbuf.get_height ()
@@ -330,7 +329,10 @@ def draw_key_image ():
   ct.select_font_face (font, cairo.FONT_SLANT_NORMAL, 
       cairo.FONT_WEIGHT_BOLD)
   print ("Reading", imgvacue)
-  im = cairo.ImageSurface.create_from_png (imgvacue)
+  if exists (imgvacue):
+    im = cairo.ImageSurface.create_from_png (imgvacue)
+  else:
+    im = cairo.ImageSurface (cairo.FORMAT_ARGB32, w_pic, h_pic)
   ct.set_source_surface(im, 0, 0)
   ct.paint()
   ct.set_font_size (args.fontsize1)
@@ -545,6 +547,10 @@ def take_timeout (self):
     [("(" + str(self.rank) + ")") if self.rank else ""] + 
     [(str(floor(seconds / 60)).zfill (2) 
       + ":" + str(floor(seconds % 60)).zfill (2))]) 
+  if args.log5:
+    if self.oldresline != self.resline:
+      print (self.resline)
+      self.oldresline = self.resline
   self.queue_draw ()
 
 def draw_window (self, widget, cr):
@@ -576,9 +582,16 @@ def draw_window (self, widget, cr):
     self.last = self.nxt
 
 def divmod_wrappoint (wrappoints, line):
-  maxwp = wrappoints [-1]
-  q,r = divmod (line, maxwp)
-  return q * maxwp + wrappoints [r] 
+  q,r = divmod (line, len(wrappoints)-1)
+  result = q * wrappoints [-1] + wrappoints [r]
+  if args.log4:
+    print ("line", line, end=", ")
+    print ("len wp", len(wrappoints)-1, end=", ")
+    print ("q",q, end=", ")
+    print ("r",r, end=", ")
+    print ("result",result)
+  return result
+
 
 def add_key (self):
   gotright, rest, lft = calc_cire (self.current,self.text[self.line % len (self.text)])
@@ -689,8 +702,6 @@ def do_quit (self,widget,event):
   print ("Total usage:", h, "hours", m, "minutes.")
   print ("Total keys:", self.alltimekeys)
   Gtk.main_quit()
-
-
 
 class Win (Gtk.Window):
   def __init__ (self):
