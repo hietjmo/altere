@@ -47,26 +47,30 @@ def read_args ():
   pad ("-wx", "--width", type=int, default=952)
   pad ("-hy", "--height", type=int, default=352)
   pad ("-ww", "--wrapwidth", type=int, default=75)
-  pad ("-cpm", "--insectspeed", type=float, default=-1.0)
+  pad ("-cpm", "--insectspeed", type=float, default=60)
   pad ("-sz1", "--keycapfontsize", type=int, default=20)
-  # pad ("-sz1", "--fontsize2", type=int, default=24)
   pad ("-sz2", "--resultlinefontsize", type=int, default=16)
   pad ("-sz3", "--writesamplefontsize", type=int, default=20)
+  pad ("-sz4", "--insectfontsize", type=int, default=8)
   pad ("--outlier", type=float, default=5.0)
   pad ("-font1", "--keycapfont", default="sans-serif")
   pad ("-font2", "--resultlinefont", default="sans-serif")
-  # pad ("-font1", "--fontname2", default="UnDotum")
   pad ("-font3", "--writesamplefont", default="monospace")
+  pad ("-font4", "--insectfont", default="sans-serif")
   pad ("--hardwarecodes", action="store_true")
   pad ("--createpic", action="store_true")
   pad ("--dontsave", action="store_true")
   pad ("--no_insects", action="store_true")
+  pad ("--constspeed", action="store_true")
   for i in range (0,10):
     pad (f"--log{i}", action="store_true")
   args = parser.parse_args ()
   return (args)
 
 args = read_args()
+if args.log7:
+  print (args)
+  print ('\n'.join(f'{k}: {repr(v)}' for k, v in vars(args).items()))
 w_pic, h_pic = args.width,args.height
 
 openmojipalette = {
@@ -177,26 +181,9 @@ baserow = [
   (46, right, 585, 120),
   (47, right, 645, 120),
 ]
-# d = {(b,c): a for a,(b,c,d,e) in list (zip (hardware_codes, squares))}
 w,h = 60,60
 
 # EAION STRLU CDPMV BGHFQ XJYKZ W
-"""
-claves = [
-  # number row:
-  (10, '1'), (11, '2'), (12, '3'), (13, '4'), (14, '5'), 
-  (15, '6'), (16, '7'), (17, '8'), (18, '9'), (19, '0'), 
-  # upper row:
-  (24, 'V'), (25, 'L'), (26, 'D'), (27, 'C'), (28, 'X'), 
-  (29, 'K'), (30, 'M'), (31, 'U'), (32, 'Y'), (33, 'P'), (34, 'J'),
-  # middle row:
-  (38, 'T'), (39, 'R'), (40, 'S'), (41, 'N'), (42, 'G'), 
-  (43, 'F'), (44, 'E'), (45, 'A'), (46, 'O'), (47, 'I'), (48, 'W'),
-  # bottom row:
-  (52, 'Q'), (53, 'H'), (54, 'B'), (55, 'Z'), (56, 'Å'), 
-  (57, 'Ö'), (58, 'Ä'), (59, ','), (60, '.'), (61, '-'),
-]
-"""
 
 def create_order (self):
   global sqs, shift, keyst, special, labels
@@ -207,7 +194,8 @@ def create_order (self):
   if args.ordine:
     order = args.ordine
   ao = order.split(order[0])
-  print ("--ordine",order)
+  if args.log7:
+    print ("\norder =",order)
   claves = (
     # number row:
     [(10+i,x) for i,x in enumerate ("1234567890+")] +
@@ -254,9 +242,13 @@ def init_vars (self):
   self.latter = {}
   self.starttime, self.timeold, self.rank = None,None,None
   self.curline = {}
-  self.errors = defaultdict (lambda: 0)
+  self.errlat = {}
   self.lasterror = 0,0
   self.outliers = []
+
+def print_insectspeed (reason,speed):
+  if args.log6:
+    print (f"({reason}) self.insectspeed = {speed:.1f}")
 
 def load_json_files (self):
   try:
@@ -264,12 +256,13 @@ def load_json_files (self):
     self.scores.sort (key=lambda y: (revers(y[0]), y[1]))
   except:
     self.scores = []
-  self.insectspeed = args.insectspeed
-  if self.scores:
-    self.insectspeed = self.scores [0][0]
-  if args.insectspeed > 0.0:
-    self.insectspeed = args.insectspeed 
-  print ("self.insectspeed =", self.insectspeed)
+  try:
+    self.errors = json.load (open ("errors.json","r"))
+    # self.errors.sort (key=lambda y: (revers(y[0]), y[1]))
+  except:
+    self.errors = []
+  self.insectspeed = args.insectspeed 
+  print_insectspeed ("args", self.insectspeed)
   try:
     self.presses = json.load (open ("presses.json","r"))
   except:
@@ -340,7 +333,6 @@ def init_ui (self):
     self.line = 0
   if args.line != -1:
     self.line % len (self.text)
-  # gdk_window = self.get_root_window()
   window = self.get_toplevel().get_window()
   window.set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
 
@@ -375,7 +367,6 @@ def draw_key_image ():
     ct.rectangle (x+25, y+25, 60, 60)
     ct.fill ()
   ct.set_source_rgb (0.0, 0.0, 0.0)
-  # ct.set_font_size (args.keycapfontsize)
   for ch in labels:
     side,num,x1,y1,h1,w1 = labels[ch]
     x,y = x1 + 25+7, y1 + 25+2
@@ -390,13 +381,20 @@ def draw_key_image ():
   print ("Writing", imgfile)
   surface.write_to_png (imgfile)
 
-def keep_small (d,periodnow):
+def keep_small (d,e,periodnow):
   result = {}
   for k,v in d.items():
     period = periodnow - v // 30
     if 0 <= period <= 4:
       result[k] = v
-  return (result)
+  errlat = {}
+  for k,v in e.items():
+    period = periodnow - k
+    if 0 <= period <= 4:
+      errlat[k] = v
+  if args.log6:
+    print (f"keep_small: {e} => {errlat}")
+  return result,errlat
 
 def same (s1,s2):
   x = 0
@@ -485,6 +483,8 @@ def calc_speed (self,chars):
   if not (self.starttime):
     self.starttime = time.time()
     self.startkey = chars - 1
+    self.insectnow = 0.0
+    self.insecttime = self.starttime
     GLib.timeout_add (195, self.on_timeout)
     print ("Started.")
   if chars not in self.latter:
@@ -499,43 +499,48 @@ def calc_speed (self,chars):
   # print (self.latter)
 
 def period_results (self):
-  pd = [0,1,2,3,4]
-  ts = [0.5,1.0,1.5,2.0]
   now = time.time()
   seconds = floor (now - self.starttime)
   periodnow = seconds // 30
   remainder = seconds % 30
-  p = {}
+  pd = [0,1,2,3,4]
+  ts = [0.5,1.0,1.5,2.0]
+  p1 = {}
   for k,v in self.latter.items():
     period = periodnow - v // 30
     for pe in pd:
-      if pe not in p:
-        p[pe] = 0
+      if pe not in p1:
+        p1[pe] = 0
       if pe == period: 
-        p[pe] += 1
+        p1[pe] += 1
   acclist = []
   for x in pd[1:]:
-    if x in p:
-      acclist.append (p[x])
+    if x in p1:
+      acclist.append (p1[x])
     else:
       acclist.append (0)
   acc = list (accumulate (acclist))
   cpm = [a/b for a,b in zip (acc,ts)]
+  ers = 100.0 * sum (self.errlat.values()) / max (1,sum (p1.values()))
+  ers = round (ers,2)
+  if not args.constspeed:
+    self.insectspeed = max (args.insectspeed, (10.00 - ers)/10 * cpm[-1])
+    print_insectspeed (f"{ers},{(10.00 - ers)/10:.2f},{cpm[-1]},{(10.00 - ers)/10 * cpm[-1]:.2f}", self.insectspeed)
   if remainder == 0 and self.lastkept != periodnow:
     self.rank = None
-    self.latter = keep_small (self.latter,periodnow)
+    self.latter,self.errlat = keep_small (self.latter,self.errlat,periodnow)
     if args.log3:
       print ("latter in memory:",len(self.latter))
       print ("acclist:",acclist)
-    if acclist.count(0) == 0:
-      self.rank = save_score (self,cpm[3])
+    if acclist.count (0) == 0:
+      self.rank = save_score (self,cpm[3],ers)
       print (f"Score saved: {cpm[3]} ({self.rank})")
     else:
       print ("Acclist contains zeros, score not saved.")
     self.lastkept = periodnow
-  return cpm,p,seconds
+  return cpm,ers,p1,seconds
 
-def save_score (self,cpm3):
+def save_score (self,cpm3,ers):
   inx = 0
   for x,t in self.scores:
     if cpm3 > x:
@@ -544,21 +549,23 @@ def save_score (self,cpm3):
       inx += 1
   self.scores.insert (inx,[cpm3,time.strftime("%Y-%m-%d %H:%M:%S")])
   self.scores = self.scores [:15000]
-  if cpm3 > self.insectspeed:
-    self.insectspeed = cpm3
-    print ("self.insectspeed =", self.insectspeed)
+  self.errors.insert (0,[ers,time.strftime("%Y-%m-%d %H:%M:%S")])
+  self.errors = self.errors [:15000]
+
   return inx + 1
 
 def take_timeout (self):
   # print ("Timeout.")
-  cpm,p,seconds = period_results (self)
+  cpm,ers,p,seconds = period_results (self)
   self.resline = " ".join (
     [str(p[0]) if 0 in p else ""] + 
     [str(self.total)] + 
     [f"{x:.1f}" for x in cpm] + 
     [("(" + str(self.rank) + ")") if self.rank else ""] + 
     [(str(floor(seconds / 60)).zfill (2) 
-      + ":" + str(floor(seconds % 60)).zfill (2))]) 
+      + ":" + str(floor(seconds % 60)).zfill (2))] +
+    [f"{ers:.2f}%"]) 
+    # [f"{ers[0]};{ers[1]};{ers[2]:.2f}%"]) 
   if args.log5:
     if self.oldresline != self.resline:
       print (self.resline)
@@ -566,17 +573,29 @@ def take_timeout (self):
   self.queue_draw ()
 
 def paint_insects (self,ct):
+  font = args.insectfont
+  ct.select_font_face (font, cairo.FONT_SLANT_NORMAL, 
+      cairo.FONT_WEIGHT_BOLD)
+  ct.set_font_size (args.insectfontsize)
   if self.starttime and not args.no_insects:
-    tme = time.time() - self.starttime
     insectspace = self.w / len (favs)
+    tme1 = time.time()
+    tme2 = tme1 - self.insecttime
+    self.insectnow = self.insectnow + self.charw * (self.insectspeed * tme2 / 60) % self.w
+    self.insecttime = tme1
     for i,color in enumerate (favs):
       ct.set_source_rgb (*color)
-      # print (self.charw)
-      # print (self.insectspeed)
-      # print (tme)
-      s1 = self.charw * (self.insectspeed * tme / 60)
-      ct.rectangle ((s1+insectspace*i)%self.w, self.h+80, 20, 5)
+      xpt = (self.insectnow + i*insectspace) % self.w
+      ct.rectangle (xpt, self.h + 78, 30, 7)
       ct.fill ()
+      ct.move_to (xpt+50, self.h + 85)
+      ct.show_text (f"{self.insectspeed:.1f}")
+
+      if xpt + 70 > self.w:
+        ct.rectangle (-(self.w - xpt), self.h + 78, 30, 7)
+        ct.fill ()
+        ct.move_to (-(self.w - xpt)+50, self.h + 85)
+        ct.show_text (f"{self.insectspeed:.1f}")
 
 def draw_window (self, widget, cr):
   Gdk.cairo_set_source_pixbuf (cr, self.pixbuf, 0, 0)
@@ -618,6 +637,24 @@ def divmod_wrappoint (wrappoints, line):
     print ("result",result)
   return result
 
+def got_error (self,gotright):
+  newerror = self.line, len(gotright)
+  if newerror != self.lasterror:
+    now = time.time()
+    seconds = floor (now - self.starttime)
+    periodnow = seconds // 30
+    print ("error:", periodnow,newerror)
+    if periodnow not in self.errlat:
+      self.errlat[periodnow] = 0
+    self.errlat[periodnow] += 1
+    self.lasterror = newerror
+    if args.log6:
+      print ("errlat:",dict(self.errlat))
+    if not args.constspeed:
+      pass
+      # self.insectspeed = 0.9 * self.insectspeed
+      # print_insectspeed ("drop", self.insectspeed)
+      # print ("(drop) self.insectspeed =", self.insectspeed)
 
 def add_key (self):
   gotright,gotwrong,lft = calc_cire (self.current,self.text[self.line % len (self.text)])
@@ -647,16 +684,8 @@ def add_key (self):
     self.timeold = now
     self.old = self.current
   else:
-    if len(gotwrong) == 1 and self.starttime:
-      newerror = self.line, len(gotright)
-      if newerror != self.lasterror:
-        now = time.time()
-        seconds = floor (now - self.starttime)
-        periodnow = seconds // 30
-        # print ("error:", periodnow,newerror)
-        self.errors[periodnow] += 1
-        self.lasterror = newerror
-        # print (dict(self.errors))
+    if len (gotwrong) == 1 and self.starttime:
+      got_error (self,gotright)
 
 def letter_shift (letter,shift):
   if letter.isalpha():
@@ -712,11 +741,15 @@ def do_quit (self,widget,event):
     json.dump (self.config, open("config.json","w"))
     json.dump (self.presses, open("presses.json","w"))
     json.dump (self.scores, open("scores.json","w"))
+    json.dump (self.errors, open("errors.json","w"))
   else:
     print ("Argument '--dontsave': Nothing has been saved.")
   print ("Outliers:")
   for out in self.outliers:
     print (f"'{out[0]}' {out[1]:.4f} s {out[2]:.2f}x")
+  print ("Latest error percentages:")
+  for x,t in self.errors[:30]:
+    print (f"{x:>6.2f}% {t}")
   print ("Number of scores =",len(self.scores))
   print ("Best scores:")
   for x,t in self.scores[:30]:
