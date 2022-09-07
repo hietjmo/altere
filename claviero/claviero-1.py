@@ -1,7 +1,9 @@
 
 """
-python claviero-1.py --ordine /vldcxkmuypj/trsngfeaoiw/qhbzåöä,.-/ --keycapfont UnDotum --keycapfontsize 24
-python claviero-1.py -order "/vldcxkmuypj/trsngfeaoiw/qhbzåöä,.-/" --createpic
+python claviero-1.py --ordine /vldcxwmuypj/trsngfeaoik/qhbzåöä,.-/ --keycapfont UnDotum --keycapfontsize 24
+python claviero-1.py --ordine /dlpmfwcuygj/trsnvqeaoik/xbzhåöä,.-/ --keycapfont UnDotum --keycapfontsize 24
+python claviero-1.py -order /qwertyuiopå/asdfghjklöä/zxcvbnm,.-/ --keycapfont UnDotum --keycapfontsize 24
+python claviero-1.py -order /qwertyuiopå/asdfghjklöä/zxcvbnm,.-/ --createpic
 Use EAIONSTRLUCDPMVBGHFQXJYKZW from
 ~/interlingua/frequentia/litteras-in-ordine.txt
 """
