@@ -1,3 +1,5 @@
+![alt text](https://github.com/hietjmo/altere/blob/main/claviero/screenshot-1.jpg?raw=true)
+
 ```
 python claviero-1.py --ordine /dlpmfwcuygj/trsnvqeaoik/xbzhåöä,.-/ --keycapfont UnDotum --keycapfontsize 24
 python claviero-1.py -order /qwertyuiopå/asdfghjklöä/zxcvbnm,.-/ --keycapfont UnDotum --keycapfontsize 24
