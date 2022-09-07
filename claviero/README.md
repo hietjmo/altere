@@ -1,4 +1,9 @@
 ```
+python claviero-1.py --ordine /dlpmfwcuygj/trsnvqeaoik/xbzhåöä,.-/ --keycapfont UnDotum --keycapfontsize 24
+python claviero-1.py -order /qwertyuiopå/asdfghjklöä/zxcvbnm,.-/ --keycapfont UnDotum --keycapfontsize 24
+
+requires: cairo, gi ('Gtk', '3.0')
+
 usage: claviero-1.py [-h] [-i INFILE] [-order ORDINE] [-p PAROLAS] [-ln LINE] [-wx WIDTH] [-hy HEIGHT] [-ww WRAPWIDTH]
                      [-wpm1 LOWERWPM] [-wpm2 UPPERWPM] [-sz1 KEYCAPFONTSIZE] [-sz2 RESULTLINEFONTSIZE]
                      [-sz3 WRITESAMPLEFONTSIZE] [-sz4 INSECTFONTSIZE] [-sz5 RESULTFONTSIZE] [-sz6 HUGEFONTSIZE]
