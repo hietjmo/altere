@@ -6,6 +6,7 @@ python claviero-1.py -order /qwertyuiopå/asdfghjklöä/zxcvbnm,.-/ --keycapfont
 
 requires: cairo, gi ('Gtk', '3.0')
 
+# python claviero-1.py --help
 usage: claviero-1.py [-h] [-i INFILE] [-order ORDINE] [-p PAROLAS] [-ln LINE] [-wx WIDTH] [-hy HEIGHT] [-ww WRAPWIDTH]
                      [-wpm1 LOWERWPM] [-wpm2 UPPERWPM] [-sz1 KEYCAPFONTSIZE] [-sz2 RESULTLINEFONTSIZE]
                      [-sz3 WRITESAMPLEFONTSIZE] [-sz4 INSECTFONTSIZE] [-sz5 RESULTFONTSIZE] [-sz6 HUGEFONTSIZE]
@@ -13,10 +14,6 @@ usage: claviero-1.py [-h] [-i INFILE] [-order ORDINE] [-p PAROLAS] [-ln LINE] [-
                      [-font4 INSECTFONT] [--hardwarecodes] [--createpic] [--dontsave] [--info] [--no_insects]
                      [--constspeed] [--log0] [--log1] [--log2] [--log3] [--log4] [--log5] [--log6] [--log7] [--log8]
                      [--log9]
-                     [files [files ...]]
-
-positional arguments:
-  files
 
 optional arguments:
   -h, --help            show this help message and exit
