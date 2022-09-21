@@ -399,11 +399,11 @@ call. This creates a kind of an input session.
 from prompt_toolkit import PromptSession
 
 # Create prompt object:
-session = PromptSession()
+session = PromptSession ()
 
 # Do multiple input calls:
-text1 = session.prompt()
-text2 = session.prompt()
+text1 = session.prompt ()
+text2 = session.prompt ()
 ```
 
 This has mainly two advantages:
@@ -536,8 +536,9 @@ our_style = merge_styles ([
   })
 ])
 
-text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer),
-        style=our_style)
+text = prompt ('Enter HTML: ', 
+  lexer=PygmentsLexer(HtmlLexer),
+  style=our_style)
 ```
 
 
@@ -619,8 +620,8 @@ a completer that implements that interface.
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
 
-html_completer = WordCompleter (
-  ['<html>', '<body>', '<head>', '<title>'])
+html_completer = WordCompleter ([
+  '<html>', '<body>', '<head>', '<title>'])
 text = prompt ('Enter HTML: ', completer=html_completer)
 print ('You said: %s' % text)
 ```
@@ -732,7 +733,33 @@ class MyCustomCompleter (Completer):
                     style='class:special-completion')
 ```
 
-The `colorful-prompts.py` example uses completion styling.
+The next example uses completion styling.
+
+```
+from prompt_toolkit.completion import Completer, Completion
+from prompt_toolkit.output.color_depth import ColorDepth
+from prompt_toolkit.shortcuts import CompleteStyle, prompt
+
+colors = [ 
+  "red", "blue", "green", "orange", "purple", 
+  "yellow", "cyan", "magenta", "pink", ]
+
+class ColorCompleter (Completer):
+  def get_completions (self, document, complete_event):
+    word = document.get_word_before_cursor ()
+    for color in colors:
+      if color.startswith (word):
+        yield Completion (
+          color,
+          start_position=-len(word),
+          style="fg:" + color,
+          selected_style="fg:white bg:" + color,
+        )
+
+print ("(The completion menu displays colors.)")
+prompt ("Type a color: ", completer=ColorCompleter())
+```
+
 
 Finally, it is possible to pass *formatted text* for the
 `display` attribute of a `prompt_toolkit.completion.Completion`. This
@@ -823,13 +850,13 @@ class NumberValidator (Validator):
   def validate (self, document):
     text = document.text
 
-    if text and not text.isdigit():
+    if text and not text.isdigit ():
       i = 0
 
       # Get index of first non numeric character.
       # We want to move the cursor here.
       for i, c in enumerate (text):
-        if not c.isdigit():
+        if not c.isdigit ():
           break
 
       raise ValidationError (
@@ -867,7 +894,7 @@ from prompt_toolkit.validation import Validator
 from prompt_toolkit import prompt
 
 def is_number (text):
-  return text.isdigit()
+  return text.isdigit ()
 
 validator = Validator.from_callable (
   is_number,
@@ -1006,7 +1033,7 @@ Similar, we could use a list of `(style,text)` tuples.
 from prompt_toolkit import prompt
 from prompt_toolkit.styles import Style
 
-def bottom_toolbar():
+def bottom_toolbar ():
   return [('class:bottom-toolbar', ' This is a toolbar. ')]
 
 style = Style.from_dict ({
@@ -1099,7 +1126,7 @@ def _ (event):
 @bindings.add ('c-x')
 def _ (event):
   " Exit when `c-x` is pressed. "
-  event.app.exit()
+  event.app.exit ()
 
 text = prompt ('> ', key_bindings=bindings)
 print ('You said: %s' % text)
@@ -1354,7 +1381,6 @@ key at a time, but not render a prompt to the output, that is also possible:
 
 ```
 import asyncio
-
 from prompt_toolkit.input import create_input
 from prompt_toolkit.keys import Keys
 
@@ -1367,11 +1393,11 @@ async def main () -> None:
       print (key_press)
 
       if key_press.key == Keys.ControlC:
-          done.set()
+        done.set ()
 
   with input.raw_mode ():
     with input.attach (keys_ready):
-      await done.wait()
+      await done.wait ()
 
 if __name__ == "__main__":
   asyncio.run (main ())
@@ -1678,7 +1704,7 @@ when progress happens.
 from prompt_toolkit.shortcuts import ProgressBar
 import time
 
-with ProgressBar() as pb:
+with ProgressBar () as pb:
   for i in pb (range (800)):
     time.sleep (.01)
 ```
@@ -1693,7 +1719,7 @@ in order to make displaying the progress possible:
 def some_iterable ():
   yield ...
 
-with ProgressBar() as pb:
+with ProgressBar () as pb:
   for i in pb (some_iterable, total=1000):
     time.sleep (.01)
 ```
@@ -1725,7 +1751,7 @@ import time
 import threading
 
 with ProgressBar () as pb:
-  # Two parallel tasks.
+  # Two parallel tasks:
   def task_1 ():
     for i in pb (range (100)):
       time.sleep (.05)
@@ -1734,7 +1760,7 @@ with ProgressBar () as pb:
     for i in pb (range (150)):
       time.sleep (.08)
 
-  # Start threads.
+  # Start threads:
   t1 = threading.Thread (target=task_1)
   t2 = threading.Thread (target=task_2)
   t1.daemon = True
@@ -1743,7 +1769,7 @@ with ProgressBar () as pb:
   t2.start ()
 
   # Wait for the threads to finish. We use a timeout for
-  # the join() call, because on Windows, join cannot be
+  # the `join` call, because on Windows, `join` cannot be
   # interrupted by Control-C or any other signal.
   for t in [t1, t2]:
     while t.is_alive ():
@@ -1876,17 +1902,17 @@ cancel = [False]
 
 @kb.add ('f')
 def _ (event):
-  print('You pressed `f`.')
+  print ('You pressed `f`.')
 
 @kb.add ('x')
 def _ (event):
   " Send Abort (control-c) signal. "
   cancel[0] = True
-  os.kill (os.getpid(), signal.SIGINT)
+  os.kill (os.getpid (), signal.SIGINT)
 
 # Use `patch_stdout`, to make sure that prints go above the
 # application.
-with patch_stdout():
+with patch_stdout ():
   with ProgressBar (key_bindings=kb,
     bottom_toolbar=bottom_toolbar) as pb:
       for i in pb (range (800)):
@@ -2285,13 +2311,13 @@ line.
 Some build-in processors of `prompt_toolkit.layout.processors`:
 
 -------------------------------------     ------------------------------------------------
-Processor                                 Usage:
+Processor                                 Usage
 -------------------------------------     ------------------------------------------------
 `HighlightSearchProcessor`                Highlight the current search results.
 
 `HighlightSelectionProcessor`             Highlight the selection.
 
-`PasswordProcessor`                       Display input as asterisks. (`*` characters).
+`PasswordProcessor`                       Display input as asterisks (`*` characters).
 
 `BracketsMismatchProcessor`               Highlight open/close mismatches for brackets.
 
@@ -2318,7 +2344,7 @@ input, but it is possible to "merge" multiple processors into one with the
 The aim of this tutorial is to build an interactive command line interface for
 an **SQLite** database using **Prompt toolkit**.
 
-## Read User Input
+## Read user input
 
 \begin{figure}[tb]
 \includegraphics[width=\textwidth]{images/repl/sqlite-1.png}
@@ -2386,7 +2412,7 @@ if __name__ == '__main__':
 ```
 
 
-## Syntax Highlighting
+## Syntax highlighting
 
 \begin{figure}[tb]
 \includegraphics[width=\textwidth]{images/repl/sqlite-3.png}
@@ -2451,29 +2477,9 @@ from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.sql import SqlLexer
 
-sql_completer = WordCompleter ([
-  'abort', 'action', 'add', 'after', 'all', 'alter',
-  'analyze', 'and', 'as', 'asc', 'attach', 'autoincrement',
-  'before', 'begin', 'between', 'by', 'cascade', 'case',
-  'cast', 'check', 'collate', 'column', 'commit', 'conflict',
-  'constraint', 'create', 'cross', 'current_date',
-  'current_time', 'current_timestamp', 'database', 'default',
-  'deferrable', 'deferred', 'delete', 'desc', 'detach',
-  'distinct', 'drop', 'each', 'else', 'end', 'escape',
-  'except', 'exclusive', 'exists', 'explain', 'fail', 'for',
-  'foreign', 'from', 'full', 'glob', 'group', 'having', 'if',
-  'ignore', 'immediate', 'in', 'index', 'indexed',
-  'initially', 'inner', 'insert', 'instead', 'intersect',
-  'into', 'is', 'isnull', 'join', 'key', 'left', 'like',
-  'limit', 'match', 'natural', 'no', 'not', 'notnull',
-  'null', 'of', 'offset', 'on', 'or', 'order', 'outer',
-  'plan', 'pragma', 'primary', 'query', 'raise', 'recursive',
-  'references', 'regexp', 'reindex', 'release', 'rename',
-  'replace', 'restrict', 'right', 'rollback', 'row',
-  'savepoint', 'select', 'set', 'table', 'temp', 'temporary',
-  'then', 'to', 'transaction', 'trigger', 'union', 'unique',
-  'update', 'using', 'vacuum', 'values', 'view', 'virtual',
-  'when', 'where', 'with', 'without'], ignore_case=True)
+sql_completer = WordCompleter (
+  list_of_keywords, 
+  ignore_case=True)
 
 def main ():
   session = PromptSession (
@@ -2519,29 +2525,9 @@ from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles import Style
 from pygments.lexers.sql import SqlLexer
 
-sql_completer = WordCompleter ([
-  'abort', 'action', 'add', 'after', 'all', 'alter',
-  'analyze', 'and', 'as', 'asc', 'attach', 'autoincrement',
-  'before', 'begin', 'between', 'by', 'cascade', 'case',
-  'cast', 'check', 'collate', 'column', 'commit', 'conflict',
-  'constraint', 'create', 'cross', 'current_date',
-  'current_time', 'current_timestamp', 'database', 'default',
-  'deferrable', 'deferred', 'delete', 'desc', 'detach',
-  'distinct', 'drop', 'each', 'else', 'end', 'escape',
-  'except', 'exclusive', 'exists', 'explain', 'fail', 'for',
-  'foreign', 'from', 'full', 'glob', 'group', 'having', 'if',
-  'ignore', 'immediate', 'in', 'index', 'indexed',
-  'initially', 'inner', 'insert', 'instead', 'intersect',
-  'into', 'is', 'isnull', 'join', 'key', 'left', 'like',
-  'limit', 'match', 'natural', 'no', 'not', 'notnull',
-  'null', 'of', 'offset', 'on', 'or', 'order', 'outer',
-  'plan', 'pragma', 'primary', 'query', 'raise', 'recursive',
-  'references', 'regexp', 'reindex', 'release', 'rename',
-  'replace', 'restrict', 'right', 'rollback', 'row',
-  'savepoint', 'select', 'set', 'table', 'temp', 'temporary',
-  'then', 'to', 'transaction', 'trigger', 'union', 'unique',
-  'update', 'using', 'vacuum', 'values', 'view', 'virtual',
-  'when', 'where', 'with', 'without'], ignore_case=True)
+sql_completer = WordCompleter (
+  list_of_keywords, 
+  ignore_case=True)
 
 style = Style.from_dict ({
   'completion-menu.completion': 'bg:#008888 #ffffff',
@@ -2599,29 +2585,9 @@ from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles import Style
 from pygments.lexers.sql import SqlLexer
 
-sql_completer = WordCompleter ([
-  'abort', 'action', 'add', 'after', 'all', 'alter',
-  'analyze', 'and', 'as', 'asc', 'attach', 'autoincrement',
-  'before', 'begin', 'between', 'by', 'cascade', 'case',
-  'cast', 'check', 'collate', 'column', 'commit', 'conflict',
-  'constraint', 'create', 'cross', 'current_date',
-  'current_time', 'current_timestamp', 'database', 'default',
-  'deferrable', 'deferred', 'delete', 'desc', 'detach',
-  'distinct', 'drop', 'each', 'else', 'end', 'escape',
-  'except', 'exclusive', 'exists', 'explain', 'fail', 'for',
-  'foreign', 'from', 'full', 'glob', 'group', 'having', 'if',
-  'ignore', 'immediate', 'in', 'index', 'indexed',
-  'initially', 'inner', 'insert', 'instead', 'intersect',
-  'into', 'is', 'isnull', 'join', 'key', 'left', 'like',
-  'limit', 'match', 'natural', 'no', 'not', 'notnull',
-  'null', 'of', 'offset', 'on', 'or', 'order', 'outer',
-  'plan', 'pragma', 'primary', 'query', 'raise', 'recursive',
-  'references', 'regexp', 'reindex', 'release', 'rename',
-  'replace', 'restrict', 'right', 'rollback', 'row',
-  'savepoint', 'select', 'set', 'table', 'temp', 'temporary',
-  'then', 'to', 'transaction', 'trigger', 'union', 'unique',
-  'update', 'using', 'vacuum', 'values', 'view', 'virtual',
-  'when', 'where', 'with', 'without'], ignore_case=True)
+sql_completer = WordCompleter (
+  list_of_keywords, 
+  ignore_case=True)
 
 style = Style.from_dict ({
   'completion-menu.completion': 'bg:#008888 #ffffff',
@@ -2950,7 +2916,7 @@ async def print_hello (event):
   """
   for i in range (5):
     # Print hello above the current prompt.
-    async with in_terminal():
+    async with in_terminal ():
       print ('hello')
 
     # Sleep, but allow further input editing in the meantime.
@@ -3035,6 +3001,12 @@ contains key bindings as well as certain settings. Right now, **Prompt toolkit**
 doesn't support `.inputrc`, but it should be possible in the future.
 
 # More about styling
+
+\begin{figure}[tb]
+\includegraphics[width=\textwidth]{images/text-editor.png}
+\caption{Text editor.}
+\end{figure}
+
 
 This chapter will attempt to explain in more detail how to use styling in
 **Prompt toolkit**.
@@ -3437,37 +3409,36 @@ print (is_searching ())
 
 ## Built-in filters
 
-There are many built-in filters, ready to use. All of them have a lowercase
+The `prompt_toolkit.filters` has many built-in filters, ready to use. All of them have a lowercase
 name, because they represent the wrapped function underneath, and can be called
-as a function.
-
-- `prompt_toolkit.filters.app.has_arg`
-- `prompt_toolkit.filters.app.has_completions`
-- `prompt_toolkit.filters.app.has_focus`
-- `prompt_toolkit.filters.app.buffer_has_focus`
-- `prompt_toolkit.filters.app.has_selection`
-- `prompt_toolkit.filters.app.has_validation_error`
-- `prompt_toolkit.filters.app.is_aborting`
-- `prompt_toolkit.filters.app.is_done`
-- `prompt_toolkit.filters.app.is_read_only`
-- `prompt_toolkit.filters.app.is_multiline`
-- `prompt_toolkit.filters.app.renderer_height_is_known`
-- `prompt_toolkit.filters.app.in_editing_mode`
-- `prompt_toolkit.filters.app.in_paste_mode`
-- `prompt_toolkit.filters.app.vi_mode`
-- `prompt_toolkit.filters.app.vi_navigation_mode`
-- `prompt_toolkit.filters.app.vi_insert_mode`
-- `prompt_toolkit.filters.app.vi_insert_multiple_mode`
-- `prompt_toolkit.filters.app.vi_replace_mode`
-- `prompt_toolkit.filters.app.vi_selection_mode`
-- `prompt_toolkit.filters.app.vi_waiting_for_text_object_mode`
-- `prompt_toolkit.filters.app.vi_digraph_mode`
-- `prompt_toolkit.filters.app.emacs_mode`
-- `prompt_toolkit.filters.app.emacs_insert_mode`
-- `prompt_toolkit.filters.app.emacs_selection_mode`
-- `prompt_toolkit.filters.app.is_searching`
-- `prompt_toolkit.filters.app.control_is_searchable`
-- `prompt_toolkit.filters.app.vi_search_direction_reversed`
+as a function. These are:
+`has_arg`,
+`has_completions`,
+`has_focus`,
+`buffer_has_focus`,
+`has_selection`,
+`has_validation_error`,
+`is_aborting`,
+`is_done`,
+`is_read_only`,
+`is_multiline`,
+`renderer_height_is_known`,
+`in_editing_mode`,
+`in_paste_mode`,
+`vi_mode`,
+`vi_navigation_mode`,
+`vi_insert_mode`,
+`vi_insert_multiple_mode`,
+`vi_replace_mode`,
+`vi_selection_mode`,
+`vi_waiting_for_text_object_mode`,
+`vi_digraph_mode`,
+`emacs_mode`,
+`emacs_insert_mode`,
+`emacs_selection_mode`,
+`is_searching`,
+`control_is_searchable` and
+`vi_search_direction_reversed`.
 
 
 ## Combining filters
@@ -3516,7 +3487,6 @@ instance, and always returns a `prompt_toolkit.filters.Filter`.
 
 ```
 from prompt_toolkit.filters.utils import to_filter
-
 # In each of the following three examples,
 # 'f' will be a `Filter` instance:
 f = to_filter (True)
@@ -3631,137 +3601,13 @@ async def main ():
       ...
   )
 
-  result = await application.run_async()
+  result = await application.run_async ()
   print (result)
 
-asyncio.get_event_loop().run_until_complete(main())
-```
-
-# Unit testing
-
-\begin{figure}[tb]
-\includegraphics[width=\textwidth]{images/text-editor.png}
-\caption{Text editor.}
-\end{figure}
-
-
-Testing user interfaces is not always obvious. Here are a few tricks for
-testing **Prompt toolkit** applications.
-
-
-## `PosixPipeInput` and `DummyOutput`
-
-During the creation of a **Prompt toolkit**
-`prompt_toolkit.application.Application`, we can specify what input and
-output device to be used. By default, these are output objects that correspond
-with `sys.stdin` and `sys.stdout`. In unit tests however, we want to replace
-these.
-
-- For the input, we want a "pipe input". This is an input device, in which we
-  can programatically send some input. It can be created with
-  `prompt_toolkit.input.create_pipe_input`, and that return either a
-  `prompt_toolkit.input.posix_pipe.PosixPipeInput` or a
-  `prompt_toolkit.input.win32_pipe.Win32PipeInput` depending on the
-  platform.
-- For the output, we want a `prompt_toolkit.output.DummyOutput`. This is
-  an output device that doesn't render anything. We don't want to render
-  anything to `sys.stdout` in the unit tests.
-
-**Note:** Typically, we don't want to test the bytes that are written to
-`sys.stdout`, because these can change any time when the rendering
-algorithm changes, and are not so meaningful anyway. Instead, we want to
-test the return value from the
-`prompt_toolkit.application.Application` or test how data
-structures (like text buffers) change over time.
-
-So we programmatically feed some input to the input pipe, have the key
-bindings process the input and then test what comes out of it.
-
-In the following example we use a
-`prompt_toolkit.shortcuts.PromptSession`, but the same works for any
-`prompt_toolkit.application.Application`.
-
-
-```
-from prompt_toolkit.shortcuts import PromptSession
-from prompt_toolkit.input import create_pipe_input
-from prompt_toolkit.output import DummyOutput
-
-def test_prompt_session ():
-  with create_pipe_input () as inp:
-    inp.send_text ("hello\n")
-    session = PromptSession (
-      input=inp,
-      output=DummyOutput(),
-    )
-
-    result = session.prompt ()
-
-  assert result == "hello"
-```
-
-In the above example, don't forget to send the `\n` character to accept the
-prompt, otherwise the `prompt_toolkit.application.Application` will
-wait forever for some more input to receive.
-
-## `Prompt_toolkit.application.current.AppSession`
-
-Sometimes it's not convenient to pass input or output objects to the
-`prompt_toolkit.application.Application`, and in some situations it's
-not even possible at all.
-This happens when these parameters are not passed down the call stack, through
-all function calls.
-
-An easy way to specify which input/output to use for all applications, is by
-creating a `prompt_toolkit.application.current.AppSession` with this
-input/output and running all code in that
-`prompt_toolkit.application.current.AppSession`. This way, we don't
-need to inject it into every `prompt_toolkit.application.Application`
-or `prompt_toolkit.shortcuts.print_formatted_text` call.
-
-Here is an example where we use
-`prompt_toolkit.application.create_app_session`:
-
-```
-from prompt_toolkit.application import create_app_session
-from prompt_toolkit.shortcuts import print_formatted_text
-from prompt_toolkit.output import DummyOutput
-
-def test_something ():
-  with create_app_session (output=DummyOutput()):
-    ...
-    print_formatted_text ('Hello world')
-    ...
-```
-
-## Pytest fixtures
-
-In order to get rid of the boilerplate of creating the input, the
-`prompt_toolkit.output.DummyOutput`, and the
-`prompt_toolkit.application.current.AppSession`, we create a
-single fixture that does it for every test. Something like this:
-
-
-```
-import pytest
-from prompt_toolkit.application import create_app_session
-from prompt_toolkit.input import create_pipe_input
-from prompt_toolkit.output import DummyOutput
-
-@pytest.fixture (autouse=True, scope="function")
-def mock_input ():
-  with create_pipe_input() as pipe_input:
-    with create_app_session (
-     input=pipe_input, output=DummyOutput()):
-       yield pipe_input
+asyncio.get_event_loop().run_until_complete (main ())
 ```
 
 
-## Type checking
-
-**Prompt toolkit 3.0** is fully type annotated. This means that if a
-**Prompt toolkit** application is typed too, it can be verified with **Mypy**. This is
-complementary to unit tests, but also great for testing for correctness.
 
 
 # Input hooks
