@@ -1,4 +1,4 @@
-![alt text](https://github.com/hietjmo/altere/blob/main/claviero/screenshot-1.jpg?raw=true)
+![alt text](https://github.com/hietjmo/altere/blob/main/claviero/screenshot-1.png?raw=true)
 
 ```
 python claviero-1.py --ordine /dlpmfwcuygj/trsnvqeaoik/xbzhåöä,.-/ --keycapfont UnDotum --keycapfontsize 24
@@ -11,9 +11,9 @@ usage: claviero-1.py [-h] [-i INFILE] [-order ORDINE] [-p PAROLAS] [-ln LINE] [-
                      [-wpm1 LOWERWPM] [-wpm2 UPPERWPM] [-sz1 KEYCAPFONTSIZE] [-sz2 RESULTLINEFONTSIZE]
                      [-sz3 WRITESAMPLEFONTSIZE] [-sz4 INSECTFONTSIZE] [-sz5 RESULTFONTSIZE] [-sz6 HUGEFONTSIZE]
                      [--outlier OUTLIER] [-font1 KEYCAPFONT] [-font2 RESULTLINEFONT] [-font3 WRITESAMPLEFONT]
-                     [-font4 INSECTFONT] [--hardwarecodes] [--createpic] [--dontsave] [--info] [--no_insects]
-                     [--constspeed] [--log0] [--log1] [--log2] [--log3] [--log4] [--log5] [--log6] [--log7] [--log8]
-                     [--log9]
+                     [-font4 INSECTFONT] [--hardwarecodes] [--paintbaserow] [--createpic] [--dontsave] [--info]
+                     [--no_insects] [--constspeed] [--log0] [--log1] [--log2] [--log3] [--log4] [--log5] [--log6]
+                     [--log7] [--log8] [--log9]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -38,12 +38,11 @@ optional arguments:
   -font3 WRITESAMPLEFONT, --writesamplefont WRITESAMPLEFONT
   -font4 INSECTFONT, --insectfont INSECTFONT
   --hardwarecodes
+  --paintbaserow
   --createpic
   --dontsave
   --info
   --no_insects
   --constspeed
-  --log0
-  --log1
   ...
 ```
