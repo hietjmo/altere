@@ -11,12 +11,13 @@ Use EAIONSTRLUCDPMVBGHFQXJYKZW from
 import argparse
 import textwrap
 import random
+import codecs
 import cairo
 import json
 import time
 import os
 import gi
-gi.require_version('Gtk', '3.0')
+gi.require_version ('Gtk', '3.0')
 from gi.repository import Gtk,Gdk,GLib
 from gi.repository.GdkPixbuf import Pixbuf
 from itertools import accumulate
@@ -25,7 +26,8 @@ from datetime import datetime, timedelta
 from os.path import exists
 from math import floor
 
-imgfile = "imagine-claviero.png"
+#imgfile = "imagine-claviero.png"
+imgfile = "keymap-claviero-1.png"
 left,right,number,kgreen = "left","right","number","kgreen"
 width = -1
 height = 352
@@ -42,7 +44,6 @@ class revers:
 def read_args ():
   parser = argparse.ArgumentParser ()
   pad = parser.add_argument
-  pad ('files', nargs='*')
   pad ("-i", "--infile", default="crusoe-de-novo-ia.txt")
   pad ("-order", "--ordine", default="")
   pad ("-p", "--parolas", default="")
@@ -64,6 +65,7 @@ def read_args ():
   pad ("-font3", "--writesamplefont", default="monospace")
   pad ("-font4", "--insectfont", default="sans-serif")
   pad ("--hardwarecodes", action="store_true")
+  pad ("--paintbaserow", action="store_true")
   pad ("--createpic", action="store_true")
   pad ("--dontsave", action="store_true")
   pad ("--info", action="store_true")
@@ -90,9 +92,24 @@ openmojipalette = {
   'LightSkinTone': '#fadcbc', 'MediumLightSkinTone': '#debb90', 'MediumSkinTone': '#c19a65', 
   'MediumDarkSkinTone': '#a57939', 'DarkSkinTone': '#6a462f', 'DarkSkinShadow': '#352318', 
   'NavyBlue': '#1e50a0', 'Maroon': '#781e32', 'DarkGreen': '#186648'}
+
+
+def hex_to_rgb (hex):
+  h = hex.lstrip('#')
+  return tuple (int (h[i:i+2], 16) / 255 for i in (0, 2, 4))
+
+favs = [hex_to_rgb (openmojipalette [name]) for name in [
+  'purple','green','orange','grey','blue','red','pink','NavyBlue','Maroon' ]]
+# random.shuffle (favs)
+
+def om (name):
+  return hex_to_rgb (openmojipalette [name])
+
+
+
 pink = (1.00, 0.9, 0.9)
 orange = (0.996, 0.878, 0.761)
-green = (0.220, 0.780, 0.278)
+# green = (0.220, 0.780, 0.278)
 purple = (0.561, 0.220, 0.780)
 yellow = (0.988,0.918,0.169)
 black = (0,0,0)
@@ -101,23 +118,36 @@ gray = grays[4]
 gray_h = gray + (0.60,)
 white = (1,1,1)
 orange2 = orange + (0.60,)
-blue = 0.22, 0.44, 0.78
-red = 0.83, 0.00, 0.00
-blue_cr =  blue + (0.20,)
-red_cr = red + (0.20,)
-blue_h = blue + (0.60,)
-red_h = red + (0.60,)
-green_h = green + (0.60,)
-yellow_h = yellow + (0.60,)
-purple_h = purple + (0.60,)
+# blue = 0.22, 0.44, 0.78
+# red = 0.83, 0.00, 0.00
 
-def hex_to_rgb (hex):
-  h = hex.lstrip('#')
-  return tuple (int (h[i:i+2], 16) / 255 for i in (0, 2, 4))
+green = om ("green")
+blue = om ("blue")
+red = om ("pink")
 
-favs = [hex_to_rgb (openmojipalette [name]) for name in [
-  'blue','red','green','orange','grey','pink','purple','NavyBlue','Maroon' ]]
-random.shuffle (favs)
+#blue_cr =  blue + (0.20,)
+#red_cr = red + (0.20,)
+
+xl,lxx = (0.40,),(0.70,)
+blue_cr =  blue + xl
+red_cr = red + xl
+
+blue_h = blue + lxx
+red_h = red + lxx
+green_h = green + lxx
+
+
+yellow_h = yellow + lxx
+purple_h = purple + lxx
+
+color = {0:black,1:grays[2],"bg":grays[5]}
+color = {
+  0:grays[10],1:grays[9],
+  "bg":grays[2],"cr":om("green"),
+  3:grays[9],4:grays[9],5:grays[9],
+  7:om("green"),8:om("purple"),9:grays[9],
+  "danger":om("blue") + xl
+}
 
 hardware_codes = [
   10,11,12,13,14,  15,16,17,18,19,
@@ -194,7 +224,7 @@ w,h = 60,60
 
 def create_order (self):
   global sqs, shift, keyst, special, labels
-  # order = "/vldcxkmuypj/trsngfeaoiw/qhbzåöä,.-/"
+  # order = "/dlpmfwcuygj/trsnvqeaoik/xbzhåöä,.-/"
   order = "/qwertyuiopå/asdfghjklöä/zxcvbnm,.-/"
   if self.order:
     order = self.order
@@ -255,6 +285,7 @@ def init_vars (self):
   self.infolines = []
   self.hugelines = []
   self.cc = 0
+  self.infolineslen = 99
 
 def wpm (cpm):
   return cpm / 5.0
@@ -266,28 +297,36 @@ def print_insectspeed (reason,speed):
   if args.log6:
     print (f"({reason}) self.insectspeed = {speed:.1f}")
 
-def infolines_append (self,infoline):
-  self.infolines.append ([self.cc,infoline])
-  self.cc = (self.cc + 1) % len (favs)
-  self.infolines = self.infolines[-15:]
+def infolines_append (self,cc,infoline):
+  # (i+2)*(fontsize + 2)
+  cc = cc  % len (favs)
+  self.infolines.append ([cc,infoline])
+  # self.cc = (self.cc + 1) % len (favs)
+  self.infolines = self.infolines[-self.infolineslen:]
 
 def load_json_files (self):
   try:
-    self.scores = json.load (open ("scores.json","r"))
-    self.scores.sort (key=lambda y: (revers(y[0]), y[1]))
+    f = open ("scores.txt")
+    s = f.read ()
+    f.close ()
+    t = [x.split("\t") for x in s.split("\n")]
+    self.scores = [(float(a),b,float(c)) for a,b,c in t]
+    # self.scores.sort (key=lambda y: (revers(y[0]),y[1],y[2]))
   except:
     self.scores = []
-  for i in range(16,-1,-1):
+  for i in range(29,-1,-1):
     if len (self.scores) > i:
-      x,t = self.scores [i]
-      infoline = f"{wpm(x):>7.1f} {t} ({i+1})"
-      infolines_append (self,infoline)
+      x,t,ers = self.scores [i]
+      infoline = f"{x:>5.1f} {t} {ers:.2f}% ({i+1})"
+      infolines_append (self,3,infoline)
+  """
   try:
     self.errors = json.load (open ("errors.json","r"))
     # self.errors.sort (key=lambda y: (revers(y[0]), y[1]))
   except:
     self.errors = []
-  self.insectspeed = cpm (args.lowerwpm)
+  """
+  self.insectspeed = args.lowerwpm
   print_insectspeed ("args", self.insectspeed)
   try:
     self.presses = json.load (open ("presses.json","r"))
@@ -296,19 +335,21 @@ def load_json_files (self):
   try:
     self.config = json.load (open ("config.json","r"))
   except:
-    self.config = {'line': 0, 'usage':0, 'alltimekeys':0}
+    self.config = {'line': 0, 'usage': 0, 'alltimekeys': 0}
   self.line = self.config ['line']
   if (not args.parolas) and 'curline' in self.config:
     self.curline = self.config ['curline']
     if args.infile in self.curline:
       self.line = self.curline [args.infile]
+    else:
+      self.line = 0
   if 'order' in self.config:
     self.order = self.config ['order']
   else:
     self.order = ""
   self.usage = self.config ['usage']
   self.alltimekeys = self.config ['alltimekeys']
-  infolines_append (self,35 * "=")
+  infolines_append (self,4,42 * "=")
 
 def wrap_text (teksto):
   wrapper = textwrap.TextWrapper (width=args.wrapwidth)
@@ -317,7 +358,7 @@ def wrap_text (teksto):
   return teksto
 
 def load_teksto ():
-  f = open (args.infile)
+  f = codecs.open (args.infile, encoding='utf-8', errors='replace')
   teksto = f.read().strip()
   f.close ()
   rpl = ("\n"," "),("  "," "),("  "," "),
@@ -333,7 +374,9 @@ def init_ui (self):
   self.pixbuf = Pixbuf.new_from_file_at_scale (
      imgfile, width, height, preserve_aspect_ratio)
   self.w,self.h = self.pixbuf.get_width (), self.pixbuf.get_height ()
-  darea = Gtk.DrawingArea ()   
+  self.infolineslen = self.h // (args.resultfontsize + 2) -1
+  self.infolines = self.infolines[-self.infolineslen:]
+  self.darea = Gtk.DrawingArea ()   
   surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, 10, 10)
   ct = cairo.Context (surface)
   font = args.writesamplefont
@@ -343,11 +386,13 @@ def init_ui (self):
   xbear, ybear, w4, h4, xadv, yadv = ct.text_extents(100*"x")
   self.charw = w4 / 100
   # print ("self.charw  =",self.charw )
-  darea.connect ("draw", self.on_draw)
-  self.add (darea)
+  self.darea.connect ("draw", self.on_draw)
+  self.set_events(self.get_events() | Gdk.EventMask.POINTER_MOTION_MASK)
+  self.add (self.darea)
   self.resize (self.w, self.h+85)
   self.connect ("delete-event", self.on_quit)
   self.connect ("key-press-event",self.on_key_press)
+  self.connect ("motion-notify-event", self.on_motion)
   self.set_position(Gtk.WindowPosition.CENTER)
   self.show_all ()
   if args.parolas:
@@ -362,7 +407,7 @@ def init_ui (self):
   if args.line != -1:
     self.line % len (self.text)
   window = self.get_toplevel().get_window()
-  window.set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
+  # window.set_cursor(Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
 
 def label_color (side):
   d = {right:blue, left:red, number:gray, kgreen: green}
@@ -373,7 +418,7 @@ def hilit_color (side):
   return d [side]
 
 def draw_key_image ():
-  imgvacue = "claviero-vacue.png"
+  imgvacue = "claviero-1.png"
   surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, w_pic, h_pic)
   ct = cairo.Context (surface)
   font = args.keycapfont
@@ -389,12 +434,12 @@ def draw_key_image ():
     im = cairo.ImageSurface (cairo.FORMAT_ARGB32, w_pic, h_pic)
   ct.set_source_surface(im, 0, 0)
   ct.paint()
-
-  for value,side,x,y in baserow:
-    ct.set_source_rgba (*(blue_cr if side == right else red_cr))
-    ct.rectangle (x+25, y+25, 60, 60)
-    ct.fill ()
-  ct.set_source_rgb (0.0, 0.0, 0.0)
+  if args.paintbaserow:
+    for value,side,x,y in baserow:
+      ct.set_source_rgba (*(blue_cr if side == right else red_cr))
+      ct.rectangle (x+25, y+25, 60, 60)
+      ct.fill ()
+  ct.set_source_rgb (*black)
   for ch in labels:
     side,num,x1,y1,h1,w1 = labels[ch]
     x,y = x1 + 25+7, y1 + 25+2
@@ -439,15 +484,15 @@ def draw_txt (x,y,ct,current,sample,gotright,gotwrong,show_arrow=False):
   ct.set_font_size (args.writesamplefontsize)
   sams = same (current,sample[0])
   padded = sample[0] if sams == 0 else " " * sams + sample[0] [sams:]
-  ct.set_source_rgb (*black)
+  ct.set_source_rgb (*color[0])
   ct.move_to (x,y+tsize)
   ct.show_text (padded)
 
-  ct.set_source_rgb (*grays[2])
+  ct.set_source_rgb (*color[1])
   ct.move_to (x,y)
   ct.show_text (sample[1])
 
-  ct.set_source_rgb (*black)
+  ct.set_source_rgb (*color[0])
   ct.move_to (x,y+2*tsize)
   ct.show_text (gotright)
 
@@ -455,7 +500,7 @@ def draw_txt (x,y,ct,current,sample,gotright,gotwrong,show_arrow=False):
   nxt = lft [:1]
   ct.set_source_rgb (*red)
   ct.show_text (gotwrong)
-  ct.set_source_rgb (*green)
+  ct.set_source_rgb (*color["cr"])
   ct.show_text ('█')
   return nxt,len(gotwrong)
 
@@ -464,7 +509,7 @@ def draw_res (ct,resline,hugelines=[],info=False):
   fsize = args.resultlinefontsize
   ot1 = fsize + 2
   ct.set_font_size (fsize)
-  ct.set_source_rgb (*black)
+  ct.set_source_rgb (*color[0])
   ct.select_font_face (font, cairo.FONT_SLANT_NORMAL, 
       cairo.FONT_WEIGHT_BOLD)
   xbear, ybear, width, height, xadv, yadv = ct.text_extents(resline)
@@ -474,7 +519,7 @@ def draw_res (ct,resline,hugelines=[],info=False):
     fsize = args.hugefontsize
     ct.set_font_size (fsize)
     for i,line in enumerate(hugelines):
-      ct.set_source_rgb (*favs[i])
+      ct.set_source_rgb (*color[7+i])
       xbear, ybear, width, height, xadv, yadv = ct.text_extents(line)
       ct.move_to (926-width,ot1 + (i+1)*1.10*fsize)
       ct.show_text (line)
@@ -516,44 +561,43 @@ def calc_speed (self,chars):
     save_resultlog (self,wtot)
   # print (self.latter)
 
-def save_score (self,cpm3,ers):
+def save_score (self,wpm3,ers):
   inx = 0
-  for x,t in self.scores:
-    if cpm3 > x:
+  for x,t,er in self.scores:
+    if wpm3 > x:
       break
     else:
       inx += 1
-  self.scores.insert (inx,[cpm3,time.strftime("%Y-%m-%d %H:%M:%S")])
+  self.scores.insert (inx,[wpm3,time.strftime("%Y-%m-%d %H:%M:%S"),ers])
   self.scores = self.scores [:15000]
-  self.errors.insert (0,[ers,time.strftime("%Y-%m-%d %H:%M:%S")])
-  self.errors = self.errors [:15000]
   return inx + 1
 
 def take_timeout (self):
   now = time.time()
   # print ("Timeout.")
-  #cpm,ers,p,seconds = period_results (self)
-  cpm1 = len (self.keys) / 2
+  #wpm,ers,p,seconds = period_results (self)
+  wpm1 = wpm (len (self.keys) / 2)
   ers = 100 * len(self.ers) / max (1,len(self.keys))
   seconds = floor (now - self.starttime)
-  if seconds >= self.lastkept + 30 and cpm1 > cpm(args.lowerwpm):
-    self.rank = save_score (self,cpm1,ers)
+  if seconds >= self.lastkept + 30 and wpm1 > args.lowerwpm:
+    self.rank = save_score (self,wpm1,ers)
     self.lastkept = seconds
-    infoline = f"{wpm(cpm1):>7.1f} {time.strftime('%Y-%m-%d %H:%M:%S')} {ers:.2f}% ({self.rank})"
-    infolines_append (self,infoline)
+    infoline = (f"{wpm1:>5.1f} {time.strftime('%Y-%m-%d %H:%M:%S')}"
+      f" {ers:.2f}% ({self.rank})" + (" *" if self.rank <= 30 else ""))
+    infolines_append (self,5,infoline)
     print (infoline)
   tottime = [(str(floor(seconds / 60)).zfill (2) 
       + ":" + str(floor(seconds % 60)).zfill (2))]
   self.resline = " ".join (
     [str(self.total)] + 
-    [f"{wpm(cpm1):.1f}"] +
+    [f"{wpm1:.1f}"] +
     tottime +
     [f"{ers:.2f}%"] +
     [("(" + str(self.rank) + ")") if self.rank else ""])
-  self.hugelines = tottime + [f"{wpm(cpm1):.1f}"] + [f"{ers:.2f}%"]
+  self.hugelines = tottime + [f"{wpm1:.1f}"] + [f"{ers:.2f}%"]
   if not args.constspeed:
-    self.insectspeed = max (cpm(args.lowerwpm), (10.00 - ers)/10 * cpm1)
-    self.insectspeed = min (cpm(args.upperwpm), self.insectspeed)
+    self.insectspeed = max (args.lowerwpm, (10.00 - ers)/10 * wpm1)
+    self.insectspeed = min (args.upperwpm, self.insectspeed)
   purge_keys (self)
   purge_errors (self)
   self.queue_draw ()
@@ -567,7 +611,7 @@ def paint_insects (self,ct):
     insectspace = self.w / len (favs)
     tme1 = time.time()
     tme2 = tme1 - self.insecttime
-    self.insectnow = self.insectnow + self.charw * (self.insectspeed * tme2 / 60) % self.w
+    self.insectnow = self.insectnow + self.charw * (cpm(self.insectspeed) * tme2 / 60) % self.w
     self.insecttime = tme1
     for i,color in enumerate (favs):
       ct.set_source_rgb (*color)
@@ -575,13 +619,13 @@ def paint_insects (self,ct):
       ct.rectangle (xpt, self.h + 78, 30, 7)
       ct.fill ()
       ct.move_to (xpt+50, self.h + 85)
-      ct.show_text (f"{wpm(self.insectspeed):.1f}")
+      ct.show_text (f"{self.insectspeed:.1f}")
 
       if xpt + 70 > self.w:
         ct.rectangle (-(self.w - xpt), self.h + 78, 30, 7)
         ct.fill ()
         ct.move_to (-(self.w - xpt)+50, self.h + 85)
-        ct.show_text (f"{wpm(self.insectspeed):.1f}")
+        ct.show_text (f"{self.insectspeed:.1f}")
 
 def draw_infolines (self, ct):
   font = args.writesamplefont
@@ -590,41 +634,43 @@ def draw_infolines (self, ct):
       cairo.FONT_WEIGHT_NORMAL)
   ct.set_font_size (fontsize)
   for i,(cc,s) in enumerate (self.infolines):
-    ct.set_source_rgb (*favs[cc])
+    ct.set_source_rgb (*color[cc])
     ct.move_to (20,(i+2)*(fontsize + 2))
     ct.show_text (s)
 
-def draw_window (self, widget, cr, info):
+def draw_window (self, widget, ct, info):
+  ct.set_source_rgb (*color["bg"])
+  ct.paint ()
   if info:
-    draw_infolines (self,cr)
+    draw_infolines (self,ct)
   else:
-    Gdk.cairo_set_source_pixbuf (cr, self.pixbuf, 0, 0)
-    cr.paint ()
+    Gdk.cairo_set_source_pixbuf (ct, self.pixbuf, 0, 0)
+    ct.paint ()
   gotright,gotwrong,lft = calc_cire (self.current,self.text[self.line % len (self.text)])
   this_and_some = [self.text [x % len(self.text)] 
     for x in range (self.line,self.line+5)]
   self.nxt,self.gotwronglen = draw_txt (
-    20,self.h+26,cr,self.current, this_and_some, gotright, gotwrong,
+    20,self.h+26,ct,self.current, this_and_some, gotright, gotwrong,
     show_arrow=(not self.starttime))
-  draw_res (cr,self.resline,self.hugelines,info)
-  paint_insects (self,cr)
+  draw_res (ct,self.resline,self.hugelines,info)
+  paint_insects (self,ct)
   if self.gotwronglen != 0:
-    cr.set_source_rgba (*yellow_h)
-    cr.rectangle (0, 0, w_pic, h_pic)
-    cr.fill ()
+    ct.set_source_rgba (*color["danger"])
+    ct.rectangle (0, 0, w_pic, h_pic)
+    ct.fill ()
   if not info:
     bs = [] if self.gotwronglen == 0 else sqs ['BackSpace']
     if self.nxt and self.nxt in sqs:
       for side,x,y,w,h in sqs [self.nxt] + bs:
-        cr.set_source_rgba (*(hilit_color(side)))
+        ct.set_source_rgba (*(hilit_color(side)))
         if gotright and lft and gotright[-1] == lft[0]:
-          cr.set_line_width(6)
-          cr.rectangle (x+25+3, y+25+3, w-6, h-6)
-          cr.stroke ()
-          cr.set_line_width(2)
+          ct.set_line_width(6)
+          ct.rectangle (x+25+3, y+25+3, w-6, h-6)
+          ct.stroke ()
+          ct.set_line_width(2)
         else:
-          cr.rectangle (x+25, y+25, w, h)
-          cr.fill ()
+          ct.rectangle (x+25, y+25, w, h)
+          ct.fill ()
       self.last = self.nxt
 
 def divmod_wrappoint (wrappoints, line):
@@ -704,6 +750,9 @@ def letter_shift (letter,shift):
     return letter.upper() if shift else letter.lower() 
   return letter
 
+def handle_motion (self, widget, event):
+  self.darea.get_window().set_cursor(Gdk.Cursor(Gdk.CursorType.LEFT_PTR))
+
 def handle_key_press (self, widget, event):
   hw2 = event.hardware_keycode
   number = event.keyval
@@ -744,6 +793,7 @@ def handle_key_press (self, widget, event):
     self.line += 1
     self.current = ""
   widget.queue_draw ()
+  self.darea.get_window().set_cursor (Gdk.Cursor(Gdk.CursorType.BLANK_CURSOR))
 
 def do_quit (self,widget,event):
   self.alltimekeys += self.total
@@ -757,32 +807,33 @@ def do_quit (self,widget,event):
   if not args.dontsave:
     json.dump (self.config, open("config.json","w"))
     json.dump (self.presses, open("presses.json","w"))
-    json.dump (self.scores, open("scores.json","w"))
-    json.dump (self.errors, open("errors.json","w"))
+    t = []
+    for score,day,errs in self.scores:
+      t.append (F"{score:.1f}\t{day}\t{errs:.2f}")
+    s = "\n".join (t)
+    f = open ("scores.txt","w")
+    f.write (s)
+    f.close ()
   else:
     print ("Argument '--dontsave': Nothing has been saved.")
   print ("Outliers:")
   for out in self.outliers:
     print (f"'{out[0]}' {out[1]:.4f} s {out[2]:.2f}x")
-  print ("Latest error percentages:")
-  for x,t in self.errors[:30]:
-    print (f"{x:>6.2f}% {t}")
   print ("Number of scores =",len(self.scores))
   print ("Best scores:")
-  for i,(x,t) in enumerate (self.scores[:30]):
+  for i,(x,t,errs) in enumerate (self.scores[:30]):
     dt = datetime.strptime(t,"%Y-%m-%d %H:%M:%S")
     past1h = datetime.now() - timedelta(hours=1)
     past24 = datetime.now() - timedelta(days=1)
     past = ""
     if dt > past24: past = "+"
     if dt > past1h: past = "*"
-    print (f"{wpm(x):>7.1f} {t} ({i+1}) {past}")
+    print (f"{wpm(x):>5.1f} {t} {errs:.2f}% ({i+1}) {past}")
   print ("Quitting.")
-  # print ("Total usage:", self.usage, "seconds.")
   m, s = divmod (self.usage, 60)
   h, m = divmod (m, 60)
   print ("Total usage:", h, "hours", m, "minutes.")
-  print ("Total keys:", self.alltimekeys)
+  print (f"Total keys: {self.alltimekeys:_}".replace("_", " "))
   Gtk.main_quit()
 
 class Win (Gtk.Window):
@@ -799,7 +850,8 @@ class Win (Gtk.Window):
     return True # True means continue calling
   def on_key_press (self, widget, event):
     handle_key_press (self, widget, event)
-
+  def on_motion (self, widget, event):
+    handle_motion (self, widget, event)
 win = Win ()
 Gtk.main ()
 
