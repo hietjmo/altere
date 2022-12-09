@@ -317,7 +317,7 @@ def load_json_files (self):
   for i in range(29,-1,-1):
     if len (self.scores) > i:
       x,t,ers = self.scores [i]
-      infoline = f"{x:>5.1f} {t} {ers:.2f}% ({i+1})"
+      infoline = f"{x:>5.1f} wpm {t} {ers:.2f}% ({i+1})"
       infolines_append (self,3,infoline)
   """
   try:
@@ -582,7 +582,7 @@ def take_timeout (self):
   if seconds >= self.lastkept + 30 and wpm1 > args.lowerwpm:
     self.rank = save_score (self,wpm1,ers)
     self.lastkept = seconds
-    infoline = (f"{wpm1:>5.1f} {time.strftime('%Y-%m-%d %H:%M:%S')}"
+    infoline = (f"{wpm1:>5.1f} wpm {time.strftime('%Y-%m-%d %H:%M:%S')}"
       f" {ers:.2f}% ({self.rank})" + (" *" if self.rank <= 30 else ""))
     infolines_append (self,5,infoline)
     print (infoline)
@@ -821,14 +821,14 @@ def do_quit (self,widget,event):
     print (f"'{out[0]}' {out[1]:.4f} s {out[2]:.2f}x")
   print ("Number of scores =",len(self.scores))
   print ("Best scores:")
-  for i,(x,t,errs) in enumerate (self.scores[:30]):
+  for i,(wpm,t,errs) in enumerate (self.scores[:30]):
     dt = datetime.strptime(t,"%Y-%m-%d %H:%M:%S")
     past1h = datetime.now() - timedelta(hours=1)
     past24 = datetime.now() - timedelta(days=1)
     past = ""
     if dt > past24: past = "+"
     if dt > past1h: past = "*"
-    print (f"{wpm(x):>5.1f} {t} {errs:.2f}% ({i+1}) {past}")
+    print (f"{wpm:>5.1f} wpm {t} {errs:.2f}% ({i+1}) {past}")
   print ("Quitting.")
   m, s = divmod (self.usage, 60)
   h, m = divmod (m, 60)
