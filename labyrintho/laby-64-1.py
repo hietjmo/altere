@@ -49,8 +49,8 @@ f = open (fullabys,"a")
 t1 = time.time()
 while True:
   path = random.choice (border)
-  d = [e for e in vicin_dict [path[-1]] if e not in path]
-  if d: c = random.choice (d)
+  d = [e for e in vicin_dict [path[-1]]]
+  c = random.choice (d)
   while d:
     path = path + c
     d = [e for e in vicin_dict [path[-1]] if e not in path]
