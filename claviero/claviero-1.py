@@ -105,8 +105,6 @@ favs = [hex_to_rgb (openmojipalette [name]) for name in [
 def om (name):
   return hex_to_rgb (openmojipalette [name])
 
-
-
 pink = (1.00, 0.9, 0.9)
 orange = (0.996, 0.878, 0.761)
 # green = (0.220, 0.780, 0.278)
@@ -293,6 +291,9 @@ def wpm (cpm):
 def cpm (wpm):
   return 5.0 * wpm
 
+def cps (wpm):
+  return 5.0 * wpm / 60
+
 def print_insectspeed (reason,speed):
   if args.log6:
     print (f"({reason}) self.insectspeed = {speed:.1f}")
@@ -317,7 +318,7 @@ def load_json_files (self):
   for i in range(29,-1,-1):
     if len (self.scores) > i:
       x,t,ers = self.scores [i]
-      infoline = f"{x:>5.1f} wpm {t} {ers:.2f}% ({i+1})"
+      infoline = f"{x:>5.1f} {cps(x):.1f} {t} {ers:.2f}% ({i+1})"
       infolines_append (self,3,infoline)
   """
   try:
@@ -582,7 +583,7 @@ def take_timeout (self):
   if seconds >= self.lastkept + 30 and wpm1 > args.lowerwpm:
     self.rank = save_score (self,wpm1,ers)
     self.lastkept = seconds
-    infoline = (f"{wpm1:>5.1f} wpm {time.strftime('%Y-%m-%d %H:%M:%S')}"
+    infoline = (f"{wpm1:>5.1f} {cps(wpm1):.1f} {time.strftime('%Y-%m-%d %H:%M:%S')}"
       f" {ers:.2f}% ({self.rank})" + (" *" if self.rank <= 30 else ""))
     infolines_append (self,5,infoline)
     print (infoline)
@@ -760,8 +761,8 @@ def handle_key_press (self, widget, event):
   shift = (event.state & Gdk.ModifierType.SHIFT_MASK)
   ctrl = (event.state & Gdk.ModifierType.CONTROL_MASK)
   accept = False
-  if ctrl and keyname == "d":
-    print ("Control-D pressed. Quitting.")
+  if ctrl and keyname == "x":
+    print ("Control-X pressed. Quitting.")
     self.on_quit (widget, event)
   if ctrl and keyname == "i":
     print ("Control-I pressed.")
