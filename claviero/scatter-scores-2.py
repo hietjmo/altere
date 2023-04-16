@@ -76,8 +76,8 @@ for x,t,e in table1[:30]:
   print (f"{x:>7.1f} {t} {e:>5.2f}")
 plt.xlabel('experimentos')
 yAxis = [score for score,d in table]
-plt.yticks (np.arange(35, 71, 5))
-plt.xticks (np.arange(0, 151, 30))
+#plt.yticks (np.arange(35, 71, 5))
+#plt.xticks (np.arange(0, 151, 30))
 if args.time:
   xAxis = [dt.datetime.strptime(d,"%Y-%m-%d %H:%M:%S").date() for score,d in table]
 elif args.days:
@@ -109,6 +109,10 @@ else:
 # plt.ylabel('parolas per minuta')
 plt.ylabel (args.ylabel)
 plt.title (args.title)
-plt.savefig ('scatter-scores-fitted.pdf', bbox_inches='tight')  
+if args.fit:
+  figname = 'scatter-scores-fitted.pdf'
+else:
+  figname = 'scatter-scores.pdf'
+plt.savefig (figname, bbox_inches='tight')  
 plt.show ()
 

@@ -122,6 +122,7 @@ orange2 = orange + (0.60,)
 green = om ("green")
 blue = om ("blue")
 red = om ("pink")
+red2 = om ("red")
 
 #blue_cr =  blue + (0.20,)
 #red_cr = red + (0.20,)
@@ -138,7 +139,6 @@ green_h = green + lxx
 yellow_h = yellow + lxx
 purple_h = purple + lxx
 
-color = {0:black,1:grays[2],"bg":grays[5]}
 color = {
   0:grays[10],1:grays[9],
   "bg":grays[2],"cr":om("green"),
@@ -282,6 +282,7 @@ def init_vars (self):
   self.outliers = []
   self.infolines = []
   self.hugelines = []
+  self.capture = []
   self.cc = 0
   self.infolineslen = 99
 
@@ -333,6 +334,10 @@ def load_json_files (self):
     self.presses = json.load (open ("presses.json","r"))
   except:
     self.presses = {}
+  try:
+    self.capture = json.load (open ("capture.json","r"))
+  except:
+    self.capture = []
   try:
     self.config = json.load (open ("config.json","r"))
   except:
@@ -501,7 +506,10 @@ def draw_txt (x,y,ct,current,sample,gotright,gotwrong,show_arrow=False):
   nxt = lft [:1]
   ct.set_source_rgb (*red)
   ct.show_text (gotwrong)
-  ct.set_source_rgb (*color["cr"])
+  if len(gotwrong) != 0:
+    ct.set_source_rgba (*red2)
+  else:
+    ct.set_source_rgb (*color["cr"])
   ct.show_text ('█')
   return nxt,len(gotwrong)
 
@@ -569,6 +577,8 @@ def save_score (self,wpm3,ers):
       break
     else:
       inx += 1
+  if inx < 31:
+    self.capture.append ([wpm3,self.keys,self.ers])
   self.scores.insert (inx,[wpm3,time.strftime("%Y-%m-%d %H:%M:%S"),ers])
   self.scores = self.scores [:15000]
   return inx + 1
@@ -580,6 +590,8 @@ def take_timeout (self):
   wpm1 = wpm (len (self.keys) / 2)
   ers = 100 * len(self.ers) / max (1,len(self.keys))
   seconds = floor (now - self.starttime)
+  if seconds < 120:
+    wpm1 = wpm (60 * len (self.keys) / max (seconds,1.0))
   if seconds >= self.lastkept + 30 and wpm1 > args.lowerwpm:
     self.rank = save_score (self,wpm1,ers)
     self.lastkept = seconds
@@ -589,6 +601,7 @@ def take_timeout (self):
     print (infoline)
   tottime = [(str(floor(seconds / 60)).zfill (2) 
       + ":" + str(floor(seconds % 60)).zfill (2))]
+
   self.resline = " ".join (
     [str(self.total)] + 
     [f"{wpm1:.1f}"] +
@@ -717,7 +730,7 @@ def add_key (self):
     now = time.time ()
     c = self.current [-1:]
     if c and self.oldtot < self.total:
-      self.keys.append ((now,c))
+      self.keys.append ([now,c])
       # print (len(self.keys),c)
       self.oldtot = self.total
     if self.gotwronglen == 0 and self.timeold:
@@ -806,6 +819,9 @@ def do_quit (self,widget,event):
     'curline': self.curline, 'alltimekeys': self.alltimekeys, 
     'order': self.order }
   if not args.dontsave:
+    self.capture.sort (reverse=True)
+    self.capture = self.capture[:30]
+    json.dump (self.capture, open("capture.json","w"))
     json.dump (self.config, open("config.json","w"))
     json.dump (self.presses, open("presses.json","w"))
     t = []
