@@ -26,8 +26,9 @@ from datetime import datetime, timedelta
 from os.path import exists
 from math import floor
 
-#imgfile = "imagine-claviero.png"
 imgfile = "keymap-claviero-1.png"
+imgerror = "white-red-kb.png"
+
 left,right,number,kgreen = "left","right","number","kgreen"
 width = -1
 height = 352
@@ -380,6 +381,7 @@ def init_ui (self):
   self.pixbuf = Pixbuf.new_from_file_at_scale (
      imgfile, width, height, preserve_aspect_ratio)
   self.w,self.h = self.pixbuf.get_width (), self.pixbuf.get_height ()
+  self.imgerror = cairo.ImageSurface.create_from_png (imgerror)
   self.infolineslen = self.h // (args.resultfontsize + 2) -1
   self.infolines = self.infolines[-self.infolineslen:]
   self.darea = Gtk.DrawingArea ()   
@@ -522,7 +524,7 @@ def draw_res (ct,resline,hugelines=[],info=False):
   ct.select_font_face (font, cairo.FONT_SLANT_NORMAL, 
       cairo.FONT_WEIGHT_BOLD)
   xbear, ybear, width, height, xadv, yadv = ct.text_extents(resline)
-  ct.move_to (926-width,ot1)
+  ct.move_to (914-width,ot1)
   ct.show_text (resline)
   if info:
     fsize = args.hugefontsize
@@ -530,7 +532,7 @@ def draw_res (ct,resline,hugelines=[],info=False):
     for i,line in enumerate(hugelines):
       ct.set_source_rgb (*color[7+i])
       xbear, ybear, width, height, xadv, yadv = ct.text_extents(line)
-      ct.move_to (926-width,ot1 + (i+1)*1.10*fsize)
+      ct.move_to (914-width,ot1 + (i+1)*1.10*fsize)
       ct.show_text (line)
 
 def save_resultlog (self,wtot):
@@ -669,9 +671,11 @@ def draw_window (self, widget, ct, info):
   draw_res (ct,self.resline,self.hugelines,info)
   paint_insects (self,ct)
   if self.gotwronglen != 0:
-    ct.set_source_rgba (*color["danger"])
-    ct.rectangle (0, 0, w_pic, h_pic)
-    ct.fill ()
+    ct.set_source_surface (self.imgerror, 0, 0)
+    ct.paint ()
+    #ct.set_source_rgba (*color["danger"])
+    #ct.rectangle (0, 0, w_pic, h_pic)
+    #ct.fill ()
   if not info:
     bs = [] if self.gotwronglen == 0 else sqs ['BackSpace']
     if self.nxt and self.nxt in sqs:
@@ -730,7 +734,7 @@ def add_key (self):
     now = time.time ()
     c = self.current [-1:]
     if c and self.oldtot < self.total:
-      self.keys.append ([now,c])
+      self.keys.append ((now,c))
       # print (len(self.keys),c)
       self.oldtot = self.total
     if self.gotwronglen == 0 and self.timeold:
