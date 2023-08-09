@@ -2,6 +2,7 @@
 
 - **Control-X**: Exit.
 - **Control-I**: Toggle between info-screen and keymap image.
+- **Control-S**: Save captured key-presses for current 2-minute interval.
 
 ```
 python claviero-1.py --ordine /dlpmfwcuygj/trsnvqeaoik/xbzhåöä,.-/ --keycapfont UnDotum --keycapfontsize 24
