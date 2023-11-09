@@ -1,7 +1,7 @@
 
 from stars import stars,abbrs,borders
 from finnish import finnish
-from math import cos,tau,sin,sqrt,atan,asin,atan2
+from math import cos,tau,sin,sqrt
 import os
 import shutil
 import cairo
@@ -277,7 +277,6 @@ def transit (ct,lon0,lat0,lon1,lat1):
   print ("dy,dx: ", dy,dx)
   d = dist (a,b)
   frames = d // 8
-  # print ("d:",d)
   frames = max (4,frames)
   print ("frames:",frames)
   step = 1.0/frames
@@ -295,7 +294,6 @@ lst = ['Ari', 'Tau', 'Gem', 'Cnc', 'Leo', 'Vir', 'Lib', 'Sco', 'Sgr', 'Cap', 'Aq
 lst = [lst[-1]] + lst
 if args.list:
   lst = args.list
-# lst = ['Tuc','Oct']
 for start,end in list (zip (lst,lst[1:])):
   print (start,end)
   ras,decs = [],[]
@@ -312,7 +310,6 @@ for start,end in list (zip (lst,lst[1:])):
   ra2 = sum (ras) / len (ras)
   transit (ct,ra1,dec1,ra2,dec2)
   paint_stable (ct,end,ra2,dec2)
-# paint_stable (ct,lst[-1],ra1,dec1)
 
 with open("mylist.txt","w") as f:
  for p in pngs:
