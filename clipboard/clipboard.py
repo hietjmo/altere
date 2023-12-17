@@ -1,4 +1,6 @@
 
+# python clipboard.py
+
 import tkinter
 
 win = tkinter.Tk ()
@@ -21,4 +23,6 @@ win.title (selection)
 win.after (100, self.check_clipboard)
 win.mainloop ()
 
+# Just use
+# :!chmod +x %
 
