@@ -13,7 +13,8 @@ import argparse
 def read_args ():
   parser = argparse.ArgumentParser ()
   pad = parser.add_argument
-  pad ("-t", "--target", default="2024-01-01 00:00:00")
+  pad ("-g", "--target", default="2024-01-01 00:00:00")
+  pad ("-t", "--text", default="HAPPY NEW YEAR!")
   pad ("--countten", action="store_true")
   pad ("--render", action="store_true")
   args = parser.parse_args ()
@@ -70,20 +71,22 @@ def diff_str (ds,now):
   sign = 1 if now - then >= 0 else -1
   days,hours,mins,sec = days_hours_mins (abs(delta))
   pm = "+" if sign == 1 else "-"
-  return delta,f"{pm}{days:03}:{hours:02}:{mins:02}:{sec:02}"
+  return delta,f"{pm}{days:03} {hours:02} {mins:02} {sec:02}"
+  # return delta,f"{pm}{days:03}:{hours:02}:{mins:02}:{sec:02}"
 
-size = 600,120
+size = 600,150
+
 
 dirpath = "render"
 if os.path.exists (dirpath) and os.path.isdir (dirpath):
   shutil.rmtree (dirpath)
-
-os.mkdir (dirpath)
+if args.render:
+  os.mkdir (dirpath)
 
 pygame.init ()
 screen = pygame.display.set_mode (size)
-fontname = "fonts/LED-Dot-Matrix.ttf"
-font = pygame.font.Font (fontname,60)
+fontname = "fonts/jd_lcd_rounded.ttf"
+font = pygame.font.Font (fontname,100)
 image = pygame.Surface(size, pygame.SRCALPHA)
 clock = pygame.time.Clock ()
 running = True
@@ -102,7 +105,7 @@ while running:
   now = time.time ()
   delta,text = diff_str (args.target,now)
   if -0.5 <= delta <= 1.5:
-    text = "Happy New Year!"
+    text = args.text
   img = font.render (text,True,color)
   rect = img.get_rect (center = (size[0]/2,size[1]/2))
   image.blit (img, rect)
